@@ -8,7 +8,7 @@
         android:shortcutLongLabel="@string/shortcut_start_long">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="com.nfcfocus.app"
+            android:targetPackage="com.flowtap.app"
             android:targetClass="com.flowtap.app.MainActivity">
             <extra android:name="action" android:value="start_focus" />
         </intent>
@@ -21,7 +21,7 @@
         android:shortcutLongLabel="@string/shortcut_end_long">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="com.nfcfocus.app"
+            android:targetPackage="com.flowtap.app"
             android:targetClass="com.flowtap.app.MainActivity">
             <extra android:name="action" android:value="end_session" />
         </intent>

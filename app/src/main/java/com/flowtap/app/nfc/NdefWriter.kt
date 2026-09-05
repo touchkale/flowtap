@@ -17,15 +17,15 @@ import com.flowtap.app.R
  * Writes and reads the Flowtap NDEF format.
  *
  * Tag format (two records):
- *  1. MIME record  application/vnd-nfcfocus-mode  payload = ASCII modeId
- *  2. Android Application Record for com.nfcfocus.app (guarantees launch)
+ *  1. MIME record  application/vnd-flowtap-mode  payload = ASCII modeId
+ *  2. Android Application Record for com.flowtap.app (guarantees launch)
  *
  * Identity is the tag UID (stored at pairing); the MIME payload is a fallback.
  */
 object NdefWriter {
 
-    const val MIME_TYPE = "application/vnd-nfcfocus-mode"
-    const val AAR_PACKAGE = "com.nfcfocus.app"
+    const val MIME_TYPE = "application/vnd-flowtap-mode"
+    const val AAR_PACKAGE = "com.flowtap.app"
 
     fun buildMessage(modeId: Long): NdefMessage {
         val mime = NdefRecord.createMime(
