@@ -1,4 +1,4 @@
-# Flowtap — Manual QA Checklist (V1)
+# FlowTap — Manual QA Checklist (V1)
 
 > Last updated after an on-emulator test pass (Android 16 / API 37, gfxstream).
 > Two emulator limitations to know: TYPE_ACCESSIBILITY_OVERLAY windows are **not
@@ -31,7 +31,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - [ ] Device Admin screen opens; enabling shows "Uninstall protection enabled"
 - [ ] Android 16 device: "NFC tag scanning" item appears and opens the system prompt
 - [ ] Step 3 lists launchable apps, search filters, checkboxes select
-- [ ] "Start using Flowtap" saves blocked apps to the default mode and shows Home
+- [ ] "Start using FlowTap" saves blocked apps to the default mode and shows Home
 - [ ] Re-opening the app skips onboarding
 
 ## Sessions
@@ -64,7 +64,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - [ ] Overlay shows live elapsed time and the tag-to-finish message
 - [ ] Overlay dismisses itself when the session ends (tag tap or app)
 - [ ] Overlay does not appear when no session is active
-- [ ] Opening Flowtap itself is never blocked (overlay is not shown over our own UI)
+- [ ] Opening FlowTap itself is never blocked (overlay is not shown over our own UI)
 - [ ] Overlay survives mode switch mid-session (shows the new mode name)
 - [ ] Home shows the blocked apps as icon badges (letter avatars) + "+N more" for unresolvable packages
 - [ ] Blocking is immediate even when the app was killed (accessibility service is separate)
@@ -107,7 +107,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - [ ] Uninstall protection: with admin active, Play/Settings uninstall is blocked; deactivation shows the warning
 - [ ] Protection rows reflect live status (resume refresh, no polling)
 - [ ] Denied notifications → "Session notifications" row appears, opens app settings
-- [ ] "Uninstall Flowtap" (About section): confirmation warns when admin protection or a session is active; confirming deactivates Device Admin and opens the system app-info screen where Uninstall works
+- [ ] "Uninstall FlowTap" (About section): confirmation warns when admin protection or a session is active; confirming deactivates Device Admin and opens the system app-info screen where Uninstall works
 - [ ] Uninstall is genuinely blocked while Device Admin is active, and unblocks after the in-app flow deactivates it
 
 ## Misc

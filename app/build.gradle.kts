@@ -10,7 +10,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.flowtap.app"
+        applicationId = "com.nfcfocus.app"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

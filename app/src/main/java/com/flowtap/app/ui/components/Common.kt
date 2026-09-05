@@ -26,7 +26,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Nfc
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -410,6 +413,56 @@ fun AppIcon(
                 style = MaterialTheme.typography.titleMedium,
                 color = palette.accentText,
             )
+        }
+    }
+}
+
+/**
+ * One-tap card surfacing installed social/distracting apps worth blocking.
+ * Shown only while [unselectedCount] > 0; disappears once all are selected.
+ */
+@Composable
+fun RecommendedBlockCard(
+    unselectedCount: Int,
+    onBlockAll: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalFocusPalette.current
+    FocusCard(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(Spacing.cardPadding),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Outlined.Block,
+                contentDescription = null,
+                tint = palette.accent,
+                modifier = Modifier.size(22.dp),
+            )
+            Spacer(Modifier.size(Spacing.md))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.rec_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = palette.textPrimary,
+                )
+                Spacer(Modifier.height(Spacing.xxs))
+                Text(
+                    stringResource(R.string.rec_sub),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = palette.textSecondary,
+                )
+            }
+            Spacer(Modifier.size(Spacing.sm))
+            Button(
+                onClick = onBlockAll,
+                colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
+            ) {
+                Text(
+                    stringResource(R.string.rec_block_all_x, unselectedCount),
+                    maxLines = 1,
+                )
+            }
         }
     }
 }

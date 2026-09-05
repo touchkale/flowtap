@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Flowtap</string>
+    <string name="app_name">FlowTap</string>
     <string name="app_tagline">Tap in. Honestly timed work.</string>
-    <string name="accessibility_service_label">Flowtap blocker</string>
-    <string name="accessibility_service_description">Flowtap uses accessibility to detect when you open a distracting app during a focus session, so it can immediately return you to your home screen. No content is ever read or stored.</string>
-    <string name="device_admin_disable_warning">Flowtap protects your focus sessions. Deactivating removes uninstall protection and will be recorded in your session log.</string>
+    <string name="accessibility_service_label">FlowTap blocker</string>
+    <string name="accessibility_service_description">FlowTap uses accessibility to detect when you open a distracting app during a focus session, so it can immediately return you to your home screen. No content is ever read or stored.</string>
+    <string name="device_admin_disable_warning">FlowTap protects your focus sessions. Deactivating removes uninstall protection and will be recorded in your session log.</string>
     <string name="device_admin_enabled_toast">Uninstall protection enabled</string>
 
     <!-- Shared -->
@@ -170,8 +170,8 @@
     <string name="settings_weekly_goal">Weekly goal</string>
     <string name="settings_protection">Protection</string>
     <string name="settings_uninstall_prot">Uninstall protection</string>
-    <string name="settings_admin_explanation">While Flowtap is a device administrator, it cannot be uninstalled. This protects your focus sessions from impulsive removal.</string>
-    <string name="settings_uninstall_prot_on">Active — Flowtap cannot be uninstalled</string>
+    <string name="settings_admin_explanation">While FlowTap is a device administrator, it cannot be uninstalled. This protects your focus sessions from impulsive removal.</string>
+    <string name="settings_uninstall_prot_on">Active — FlowTap cannot be uninstalled</string>
     <string name="settings_uninstall_prot_off">Enable Device Admin to block uninstall</string>
     <string name="settings_app_blocking">App blocking</string>
     <string name="settings_app_blocking_on">Active — blocked apps are returned home</string>
@@ -196,12 +196,12 @@
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_about">About</string>
-    <string name="settings_version_x">Flowtap v%1$s</string>
+    <string name="settings_version_x">FlowTap v%1$s</string>
     <string name="settings_version_sub">Everything stays on this device. No accounts, no cloud.</string>
-    <string name="settings_uninstall">Uninstall Flowtap</string>
+    <string name="settings_uninstall">Uninstall FlowTap</string>
     <string name="settings_uninstall_on">Deactivates uninstall protection, then opens the system Uninstall screen</string>
     <string name="settings_uninstall_off">Opens the system Uninstall screen</string>
-    <string name="settings_uninstall_title">Uninstall Flowtap?</string>
+    <string name="settings_uninstall_title">Uninstall FlowTap?</string>
     <string name="settings_uninstall_admin_note">Uninstall protection will be deactivated first.\n\n</string>
     <string name="settings_uninstall_session_note">A focus session is running — it will end immediately.\n\n</string>
     <string name="settings_uninstall_confirm_note">You\'ll confirm the removal on the system screen that opens next.</string>
@@ -217,7 +217,7 @@
     <string name="ob_scan">Scan tag</string>
     <string name="ob_later">Do it later</string>
     <string name="ob_grant_title">Grant permissions</string>
-    <string name="ob_grant_sub">Each row opens a system screen. Flowtap never reads your content.</string>
+    <string name="ob_grant_sub">Each row opens a system screen. FlowTap never reads your content.</string>
     <string name="ob_perm_blocking">App blocking</string>
     <string name="ob_perm_blocking_sub">Returns you home when a blocked app opens during a session</string>
     <string name="ob_perm_dnd">Do Not Disturb</string>
@@ -230,9 +230,9 @@
     <string name="ob_perm_nfc">NFC</string>
     <string name="ob_perm_nfc_sub">Required to detect your tags</string>
     <string name="ob_perm_nfc_scan">NFC tag scanning</string>
-    <string name="ob_perm_nfc_scan_sub">Android 16 requires you to allow Flowtap to scan tags</string>
+    <string name="ob_perm_nfc_scan_sub">Android 16 requires you to allow FlowTap to scan tags</string>
     <string name="ob_perm_uninstall">Uninstall protection</string>
-    <string name="ob_perm_uninstall_sub">Makes Flowtap undeletable until deactivated (recommended)</string>
+    <string name="ob_perm_uninstall_sub">Makes FlowTap undeletable until deactivated (recommended)</string>
     <string name="ob_perm_granted">Granted</string>
     <string name="ob_perm_not_granted">Not granted</string>
     <string name="ob_block_title">Block distracting apps</string>
@@ -242,7 +242,7 @@
     <string name="ob_no_apps">No apps found</string>
     <string name="ob_no_match">No matches for \"%1$s\"</string>
     <string name="ob_try_search">Try a different search.</string>
-    <string name="ob_start">Start using Flowtap</string>
+    <string name="ob_start">Start using FlowTap</string>
     <string name="ob_saving">Saving…</string>
 
     <!-- Pairing -->
@@ -265,13 +265,18 @@
     <string name="nfc_paired">Tag paired!</string>
     <string name="nfc_pair_failed">Pairing failed: %1$s</string>
     <string name="nfc_new_tag">New tag</string>
-    <string name="nfc_unknown_tag">Unknown NFC tag — pair it in Flowtap first</string>
+    <string name="nfc_unknown_tag">Unknown NFC tag — pair it in FlowTap first</string>
     <string name="nfc_read_only">This tag is read-only</string>
     <string name="nfc_unsupported">Tag not supported</string>
     <string name="nfc_write_failed">Write failed</string>
     <string name="nfc_no_tag_detected">No NFC tag detected</string>
     <string name="nfc_write_ok">Tag written</string>
     <string name="nfc_write_failed_generic">Write failed</string>
+
+    <!-- Recommended apps -->
+    <string name="rec_title">Recommended to block</string>
+    <string name="rec_sub">Social media and other distracting apps found on this phone</string>
+    <string name="rec_block_all_x">Block all %1$d</string>
 
     <!-- Blocking overlay -->
     <string name="overlay_active_x">%1$s is active</string>
@@ -283,7 +288,7 @@
     <string name="overlay_show_timer">Show my timer</string>
     <string name="overlay_hold_caps">HOLD TO END</string>
     <string name="overlay_hold_keep_x">Keep holding (%1$d…)</string>
-    <string name="overlay_open_app_toast">Open Flowtap from your home screen to see your timer</string>
+    <string name="overlay_open_app_toast">Open FlowTap from your home screen to see your timer</string>
 
     <!-- Emergency hold -->
     <string name="hold_label">Hold to end session</string>

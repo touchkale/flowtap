@@ -82,11 +82,13 @@ import com.flowtap.app.nfc.PairTagActivity
 import com.flowtap.app.ui.components.AppIcon
 import com.flowtap.app.ui.components.EmptyState
 import com.flowtap.app.ui.components.PulsingNfcIcon
+import com.flowtap.app.ui.components.RecommendedBlockCard
 import com.flowtap.app.ui.theme.Dimens
 import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Spacing
 import com.flowtap.app.ui.util.rememberAdaptiveSidePadding
 import com.flowtap.app.ui.util.rememberResumeTick
+import com.flowtap.app.util.RecommendedApps
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -567,6 +569,21 @@ private fun BlockedAppsStep(vm: OnboardingViewModel, onDone: () -> Unit) {
         .filter { it.label.contains(query.trim(), ignoreCase = true) }
         .sortedBy { it.label.lowercase() }
 
+    // Installed social/distracting apps, in curation order. Shown as a
+    // one-tap section above the full directory while not searching.
+    val recommended = remember(apps) {
+        val byPkg = apps.associateBy { it.pkg }
+        RecommendedApps.installed(apps.map { it.pkg }.toSet()).mapNotNull { byPkg[it] }
+    }
+    val recommendedPkgs = remember(recommended) { recommended.map { it.pkg }.toSet() }
+    val unselectedRecommended = recommended.filter { it.pkg !in selected }
+    val showRecommended = query.isBlank() && recommended.isNotEmpty()
+    val listApps = if (showRecommended) {
+        filtered.filter { it.pkg !in recommendedPkgs }
+    } else {
+        filtered
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
             stringResource(R.string.ob_block_title),
@@ -599,7 +616,7 @@ private fun BlockedAppsStep(vm: OnboardingViewModel, onDone: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(Spacing.md))
-        if (filtered.isEmpty()) {
+        if (!showRecommended && filtered.isEmpty()) {
             EmptyState(
                 title = if (query.isBlank()) {
                     stringResource(R.string.ob_no_apps)
@@ -613,7 +630,24 @@ private fun BlockedAppsStep(vm: OnboardingViewModel, onDone: () -> Unit) {
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(Spacing.xs),
             ) {
-                items(filtered, key = { it.pkg }) { app ->
+                if (showRecommended && unselectedRecommended.isNotEmpty()) {
+                    item(key = "recommended") {
+                        RecommendedBlockCard(
+                            unselectedCount = unselectedRecommended.size,
+                            onBlockAll = { vm.setSelectedBlocked(selected + recommendedPkgs) },
+                        )
+                    }
+                }
+                if (showRecommended) {
+                    items(recommended, key = { "rec-${it.pkg}" }) { app ->
+                        AppRow(
+                            app = app,
+                            checked = app.pkg in selected,
+                            onToggle = { vm.toggleBlocked(app.pkg) },
+                        )
+                    }
+                }
+                items(listApps, key = { it.pkg }) { app ->
                     AppRow(
                         app = app,
                         checked = app.pkg in selected,

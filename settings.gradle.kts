@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Flowtap"
+rootProject.name = "FlowTap"
 include(":app")

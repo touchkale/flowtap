@@ -56,10 +56,12 @@ import androidx.compose.ui.unit.dp
 import com.flowtap.app.R
 import com.flowtap.app.data.model.FocusMode
 import com.flowtap.app.ui.components.AppIcon
+import com.flowtap.app.ui.components.RecommendedBlockCard
 import com.flowtap.app.ui.components.StatusChip
 import com.flowtap.app.ui.theme.Dimens
 import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Spacing
+import com.flowtap.app.util.RecommendedApps
 
 data class InstalledApp(val pkg: String, val label: String)
 
@@ -272,6 +274,19 @@ fun ModeEditorForm(
         apps.sortedBy { it.label.lowercase() }
             .filter { q.isEmpty() || it.label.lowercase().contains(q) || it.pkg.lowercase().contains(q) }
     }
+    // Installed social/distracting apps first while browsing a blocklist.
+    val recommended = remember(apps) {
+        val byPkg = apps.associateBy { it.pkg }
+        RecommendedApps.installed(apps.map { it.pkg }.toSet()).mapNotNull { byPkg[it] }
+    }
+    val showRecommended = !state.allowlistOnly && appSearch.isBlank() && recommended.isNotEmpty()
+    val unselectedRecommended = recommended.filter { it.pkg !in state.blocked }
+    val displayApps = if (showRecommended) {
+        val recPkgs = recommended.map { it.pkg }.toSet()
+        recommended + sortedApps.filter { it.pkg !in recPkgs }
+    } else {
+        sortedApps
+    }
     val sortedLaunchApps = remember(apps, launchSearch) {
         val q = launchSearch.trim().lowercase()
         apps.sortedBy { it.label.lowercase() }
@@ -415,8 +430,17 @@ fun ModeEditorForm(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(Spacing.xs))
+                if (showRecommended && unselectedRecommended.isNotEmpty()) {
+                    RecommendedBlockCard(
+                        unselectedCount = unselectedRecommended.size,
+                        onBlockAll = {
+                            state.blocked = state.blocked + recommended.map { it.pkg }.toSet()
+                        },
+                    )
+                    Spacer(Modifier.height(Spacing.xs))
+                }
                 LazyColumn(modifier = Modifier.heightIn(max = appListMaxHeight)) {
-                    items(sortedApps, key = { it.pkg }) { app ->
+                    items(displayApps, key = { it.pkg }) { app ->
                         val checked = if (state.allowlistOnly) app.pkg in state.allowed else app.pkg in state.blocked
                         Row(
                             modifier = Modifier
