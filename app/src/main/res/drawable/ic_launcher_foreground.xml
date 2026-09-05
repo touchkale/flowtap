@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Flowtap launcher foreground.
+        Broken timer ring (honestly timed work window) + live session dot,
+        bold F (Flowtap) whose crossbar radiates NFC tap waves.
+        Palette: white F, teal #2DBDA4 accents on slate #0B0F14 background. -->
+    <!-- Timer ring: 316-degree arc, 44-degree gap at top -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#2DBDA4"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:pathData="M 65.24 26.18 A 30 30 0 1 1 42.76 26.18" />
+    <!-- Live session dot bridging the ring gap -->
+    <path
+        android:fillColor="#2DBDA4"
+        android:pathData="M 59 24 A 5 5 0 1 1 49 24 A 5 5 0 1 1 59 24 z" />
+    <!-- F stem -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="9"
+        android:strokeLineCap="round"
+        android:pathData="M 44 44 L 44 68" />
+    <!-- F top bar (flat caps for a crisp wordmark corner) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="9"
+        android:strokeLineCap="butt"
+        android:pathData="M 39.5 42 L 57 42" />
+    <!-- Tap waves radiating right of the stem (the F crossbar) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#2DBDA4"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M 55.5 51 A 6.5 6.5 0 0 1 55.5 61" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#2DBDA4"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M 60.5 47.5 A 12 12 0 0 1 60.5 63.5" />
+</vector>
