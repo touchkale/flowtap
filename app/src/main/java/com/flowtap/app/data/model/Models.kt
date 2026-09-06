@@ -31,6 +31,8 @@ data class FocusMode(
     val allowedApps: List<String> = emptyList(),
     /** Package launched automatically when a session of this mode starts; null = none. */
     val launchPackage: String? = null,
+    /** Per-mode daily goal in minutes; default 300 (5h). Custom hours+minutes in editor. */
+    val dailyGoalMinutes: Int = 300,
     val createdAt: Long = System.currentTimeMillis(),
 )
 

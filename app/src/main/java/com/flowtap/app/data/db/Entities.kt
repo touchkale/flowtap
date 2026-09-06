@@ -8,6 +8,7 @@ import androidx.room.PrimaryKey
  * blockedAppsJson is a JSON array of package names (see util/Json).
  * v2 adds: keepAwake (nullable override), autoEndMinutes (nullable),
  * allowlistOnly + allowedAppsJson, launchPackage.
+ * v3 adds: dailyGoalMinutes (per-mode daily goal, default 300).
  */
 @Entity(tableName = "modes")
 data class ModeEntity(
@@ -23,6 +24,7 @@ data class ModeEntity(
     val allowlistOnly: Boolean = false,
     val allowedAppsJson: String = "[]",
     val launchPackage: String? = null,
+    val dailyGoalMinutes: Int = 300,
     val createdAt: Long,
 )
 

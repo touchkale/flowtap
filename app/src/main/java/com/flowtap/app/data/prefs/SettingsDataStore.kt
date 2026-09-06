@@ -25,6 +25,18 @@ enum class ThemeMode(val key: String) {
     }
 }
 
+/** How app-blocking detects the foreground app. */
+enum class BlockingMethod(val key: String) {
+    FULL_POWER("full_power"),
+    COMPATIBILITY("compatibility"),
+    ;
+
+    companion object {
+        fun fromKey(key: String?): BlockingMethod =
+            entries.firstOrNull { it.key == key } ?: FULL_POWER
+    }
+}
+
 /** Central key-value store for settings and the persisted active-session snapshot. */
 class SettingsDataStore(private val context: Context) {
 
@@ -36,6 +48,7 @@ class SettingsDataStore(private val context: Context) {
         val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
         val KEEP_SCREEN_AWAKE = booleanPreferencesKey("keep_screen_awake")
         val THEME_MODE = stringPreferencesKey("theme_mode")
+        val BLOCKING_METHOD = stringPreferencesKey("blocking_method")
         val ACTIVE_SESSION_JSON = stringPreferencesKey("active_session_json")
         val PRIOR_DND_FILTER = intPreferencesKey("prior_dnd_filter")
         val PENDING_DND_RESTORE = booleanPreferencesKey("pending_dnd_restore")
@@ -65,6 +78,9 @@ class SettingsDataStore(private val context: Context) {
 
     val themeMode: Flow<ThemeMode> = context.settingsDataStore.data
         .map { ThemeMode.fromKey(it[Keys.THEME_MODE]) }
+
+    val blockingMethod: Flow<BlockingMethod> = context.settingsDataStore.data
+        .map { BlockingMethod.fromKey(it[Keys.BLOCKING_METHOD]) }
 
     val activeSession: Flow<ActiveSessionSnapshot?> = context.settingsDataStore.data
         .map { prefs -> prefs[Keys.ACTIVE_SESSION_JSON]?.let(::decodeSession) }
@@ -101,6 +117,10 @@ class SettingsDataStore(private val context: Context) {
 
     suspend fun setThemeMode(mode: ThemeMode) {
         context.settingsDataStore.edit { it[Keys.THEME_MODE] = mode.key }
+    }
+
+    suspend fun setBlockingMethod(method: BlockingMethod) {
+        context.settingsDataStore.edit { it[Keys.BLOCKING_METHOD] = method.key }
     }
 
     suspend fun saveActiveSession(snapshot: ActiveSessionSnapshot) {

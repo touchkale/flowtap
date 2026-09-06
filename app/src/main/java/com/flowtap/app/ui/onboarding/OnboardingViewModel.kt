@@ -11,7 +11,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class OnboardingViewModel(private val repo: FocusRepository) : ViewModel() {
+class OnboardingViewModel(
+    private val repo: FocusRepository,
+    private val settings: com.flowtap.app.data.prefs.SettingsDataStore,
+) : ViewModel() {
 
     private val _step = MutableStateFlow(1)
     val step: StateFlow<Int> = _step
@@ -21,6 +24,17 @@ class OnboardingViewModel(private val repo: FocusRepository) : ViewModel() {
 
     private val _saving = MutableStateFlow(false)
     val saving: StateFlow<Boolean> = _saving
+
+    val hardcoreMode = settings.hardcoreMode
+    val blockingMethod = settings.blockingMethod
+
+    fun setHardcore(enabled: Boolean) {
+        viewModelScope.launch { settings.setHardcoreMode(enabled) }
+    }
+
+    fun setBlockingMethod(method: com.flowtap.app.data.prefs.BlockingMethod) {
+        viewModelScope.launch { settings.setBlockingMethod(method) }
+    }
 
     fun next() {
         if (_step.value < 3) _step.value += 1
@@ -61,7 +75,7 @@ class OnboardingViewModel(private val repo: FocusRepository) : ViewModel() {
 
     companion object {
         fun factory(container: AppContainer) = vmFactory {
-            OnboardingViewModel(container.focusRepository)
+            OnboardingViewModel(container.focusRepository, container.settingsDataStore)
         }
     }
 }

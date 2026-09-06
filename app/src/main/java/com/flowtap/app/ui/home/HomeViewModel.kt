@@ -11,8 +11,10 @@ import com.flowtap.app.data.repo.StatsRepository
 import com.flowtap.app.di.AppContainer
 import com.flowtap.app.session.SessionManager
 import com.flowtap.app.ui.vmFactory
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -26,6 +28,11 @@ class HomeViewModel(
     val todayTotalMs: StateFlow<Long> = stats.observeTodayTotalMs()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0L)
 
+    val todayByMode: StateFlow<Map<Long, Long>> = stats.observeTodayTotalByMode()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    // Kept for compat: global default is no longer used for progress (per-mode goals win).
+    // Exposed so old callers don't break during migration.
     val dailyGoalMs: StateFlow<Long> = settings.dailyGoalMinutes
         .map { it * 60_000L }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsDataStore.DEFAULT_DAILY_GOAL_MIN * 60_000L)
@@ -39,16 +46,37 @@ class HomeViewModel(
     val modes: StateFlow<List<FocusMode>> = repo.modes
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    /** F13: the mode the Home button can soft-start — never a strict one. */
-    val softStartMode: StateFlow<FocusMode?> = repo.modes
-        .map { list -> list.firstOrNull { !it.strictMode } }
+    /** Dropdown selection for idle preview. Null = first mode. Reset when modes change. */
+    private val _selectedModeId = MutableStateFlow<Long?>(null)
+    val selectedModeId: StateFlow<Long?> = _selectedModeId
+
+    val selectedMode: StateFlow<FocusMode?> = combine(modes, _selectedModeId) { list, sel ->
+        if (list.isEmpty()) null
+        else list.firstOrNull { it.id == sel } ?: list.firstOrNull()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val selectedTodayMs: StateFlow<Long> = combine(todayByMode, selectedMode) { byMode, mode ->
+        if (mode == null) 0L else byMode[mode.id] ?: 0L
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0L)
+
+    val selectedGoalMs: StateFlow<Long> = selectedMode
+        .map { (it?.dailyGoalMinutes ?: SettingsDataStore.DEFAULT_DAILY_GOAL_MIN) * 60_000L }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsDataStore.DEFAULT_DAILY_GOAL_MIN * 60_000L)
+
+    fun selectMode(id: Long) {
+        _selectedModeId.value = id
+    }
+
+    /** F13: the mode the Home button can soft-start — the selected non-strict mode. */
+    val softStartMode: StateFlow<FocusMode?> = selectedMode
+        .map { mode -> mode?.takeIf { !it.strictMode } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val modeNames: StateFlow<Map<Long, String>> = repo.modes
         .map { list -> list.associate { it.id to it.name } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
-    /** Soft-start fallback for testing: starts the first NON-strict mode with no NFC tag. */
+    /** Soft-start fallback for testing: starts the selected NON-strict mode with no NFC tag. */
     fun startFocusDefault() {
         val mode = softStartMode.value ?: return
         SessionManager.startSession(mode, null)
@@ -63,6 +91,7 @@ class HomeViewModel(
     fun toggleModeDnd(onResult: (DndToggleResult) -> Unit) {
         viewModelScope.launch {
             val targetId = SessionManager.current?.modeId
+                ?: selectedMode.value?.id
                 ?: modes.value.firstOrNull()?.id
             val mode = targetId?.let { repo.getMode(it) }
             if (mode == null) {

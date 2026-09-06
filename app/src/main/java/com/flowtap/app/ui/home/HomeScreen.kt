@@ -38,15 +38,21 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material.icons.outlined.Nfc
 import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -94,8 +100,10 @@ fun HomeScreen(
     val vm: HomeViewModel = viewModel(factory = HomeViewModel.factory(container))
     val palette = LocalFocusPalette.current
 
-    val todayTotal by vm.todayTotalMs.collectAsStateWithLifecycle()
-    val dailyGoal by vm.dailyGoalMs.collectAsStateWithLifecycle()
+    val todayByMode by vm.todayByMode.collectAsStateWithLifecycle()
+    val selectedMode by vm.selectedMode.collectAsStateWithLifecycle()
+    val selectedToday by vm.selectedTodayMs.collectAsStateWithLifecycle()
+    val selectedGoal by vm.selectedGoalMs.collectAsStateWithLifecycle()
     val hardcore by vm.hardcoreMode.collectAsStateWithLifecycle()
     val recent by vm.recent.collectAsStateWithLifecycle()
     val modes by vm.modes.collectAsStateWithLifecycle()
@@ -168,23 +176,30 @@ fun HomeScreen(
         }
 
         if (active != null) {
+            val snap = active!!
+            val runningMode = modes.firstOrNull { it.id == snap.modeId }
+            val runningGoalMs = ((runningMode?.dailyGoalMinutes ?: 300) * 60_000L)
+            val runningBaseMs = todayByMode[snap.modeId] ?: 0L
             ActiveSessionView(
-                snap = active!!,
+                snap = snap,
                 hardcore = hardcore,
                 context = context,
                 onEnd = { vm.endFocus() },
                 onEmergencyEnd = { vm.endFocusEmergency() },
                 onToggleDnd = ::onToggleDnd,
-                todayTotalMs = todayTotal,
-                dailyGoalMs = dailyGoal,
+                modeTodayBaseMs = runningBaseMs,
+                modeGoalMs = runningGoalMs,
             )
         } else {
             IdleView(
-                todayTotal = todayTotal,
-                dailyGoal = dailyGoal,
+                todayTotal = selectedToday,
+                dailyGoal = selectedGoal,
                 recent = recent,
                 modeNames = modeNames,
-                defaultMode = modes.firstOrNull(),
+                modes = modes,
+                selectedMode = selectedMode,
+                onSelectMode = { vm.selectMode(it) },
+                defaultMode = selectedMode ?: modes.firstOrNull(),
                 softStartMode = softStartMode,
                 modesEmpty = modes.isEmpty(),
                 onStart = { vm.startFocusDefault() },
@@ -199,13 +214,16 @@ fun HomeScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun IdleView(
     todayTotal: Long,
     dailyGoal: Long,
     recent: List<SessionRecord>,
     modeNames: Map<Long, String>,
+    modes: List<FocusMode>,
+    selectedMode: FocusMode?,
+    onSelectMode: (Long) -> Unit,
     defaultMode: FocusMode?,
     softStartMode: FocusMode?,
     modesEmpty: Boolean,
@@ -275,31 +293,42 @@ private fun IdleView(
                 )
             }
             Spacer(Modifier.height(Spacing.md))
-            GoalRing(progress = progress, size = Dimens.heroRingIdle, strokeWidth = 12.dp) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    AnimatedContent(
-                        targetState = TimeUtil.formatHoursMinutes(todayTotal),
-                        transitionSpec = { fadeIn() togetherWith fadeOut() },
-                        label = "todayTotal",
-                    ) { value ->
-                        AdaptiveTimerText(
-                            text = value,
-                            color = palette.textPrimary,
-                            baseFontSize = MaterialTheme.typography.displayMedium.fontSize,
-                            maxWidthFraction = 0.52f,
+            val heroSize = if (rememberIsCompactHeight()) Dimens.heroRingCompact else Dimens.heroRing
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                GoalRing(
+                    progress = progress,
+                    size = heroSize,
+                    strokeWidth = Dimens.heroRingStroke,
+                    modifier = Modifier.sizeIn(maxWidth = 320.dp, maxHeight = 320.dp),
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        AnimatedContent(
+                            targetState = TimeUtil.formatHoursMinutes(todayTotal),
+                            transitionSpec = { fadeIn() togetherWith fadeOut() },
+                            label = "todayTotal",
+                        ) { value ->
+                            AdaptiveTimerText(
+                                text = value,
+                                color = palette.textPrimary,
+                                baseFontSize = MaterialTheme.typography.displayMedium.fontSize,
+                                maxWidthFraction = 0.6f,
+                            )
+                        }
+                        Spacer(Modifier.height(Spacing.xs))
+                        ModeDropdown(
+                            modes = modes,
+                            selected = selectedMode,
+                            onSelect = onSelectMode,
+                        )
+                        Text(
+                            stringResource(R.string.common_goal_x, TimeUtil.formatGoal(dailyGoal / 60_000)),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = palette.accentText,
                         )
                     }
-                    Spacer(Modifier.height(Spacing.xs))
-                    Text(
-                        stringResource(R.string.home_deep_work_today),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = palette.textSecondary,
-                    )
-                    Text(
-                        stringResource(R.string.common_goal_x, TimeUtil.formatGoal(dailyGoal / 60_000)),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = palette.accentText,
-                    )
                 }
             }
             Spacer(Modifier.height(Spacing.md))
@@ -434,8 +463,8 @@ private fun ActiveSessionView(
     onEnd: () -> Unit,
     onEmergencyEnd: () -> Unit,
     onToggleDnd: () -> Unit,
-    todayTotalMs: Long,
-    dailyGoalMs: Long,
+    modeTodayBaseMs: Long,
+    modeGoalMs: Long,
 ) {
     val palette = LocalFocusPalette.current
     var elapsedMs by remember(snap.sessionId) { mutableLongStateOf(snap.elapsedMs()) }
@@ -449,17 +478,15 @@ private fun ActiveSessionView(
     // Hardcore mode: the session cannot be ended from the app at all.
     val endLocked = snap.strictMode || hardcore
 
-    // Home always shows TODAY's cumulative time: a new session started later the
-    // same day continues from today's total instead of resetting to zero.
-    // Live sum (not a captured base): todayTotalMs only counts completed
-    // sessions — the running one isn't persisted until it ends — so there is
-    // no double count, and a cold start can never freeze a stale zero.
+    // Active timer shows THIS mode's today total (cumulative, live-ticking),
+    // not all modes combined. modeTodayBaseMs counts completed sessions for
+    // this mode only — the running one isn't persisted until it ends.
     // Overnight sessions are capped at today's slice via the session start.
     val nowMs = System.currentTimeMillis()
     val elapsedToday = (nowMs - maxOf(snap.startedAtEpoch, TimeUtil.localDayStart(nowMs)))
         .coerceAtLeast(0L)
-    val dayTotal = todayTotalMs + elapsedToday
-    val dayProgress = if (dailyGoalMs > 0) dayTotal.toFloat() / dailyGoalMs else 0f
+    val dayTotal = modeTodayBaseMs + elapsedToday
+    val dayProgress = if (modeGoalMs > 0) dayTotal.toFloat() / modeGoalMs else 0f
     val dayLabel = TimeUtil.formatHoursMinutes(dayTotal)
 
     Row(
@@ -483,8 +510,8 @@ private fun ActiveSessionView(
 
     Spacer(Modifier.height(Spacing.lg))
 
-    // Landscape / short windows: shrink the hero so timer + actions fit.
-    val activeRingSize = if (rememberIsCompactHeight()) 180.dp else Dimens.heroRingActive
+    // Unified with idle: same ring spec so active/inactive timers match.
+    val activeRingSize = if (rememberIsCompactHeight()) Dimens.heroRingCompact else Dimens.heroRing
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
@@ -492,14 +519,15 @@ private fun ActiveSessionView(
         GoalRing(
             progress = dayProgress,
             size = activeRingSize,
-            strokeWidth = 14.dp,
+            strokeWidth = Dimens.heroRingStroke,
             modifier = Modifier.sizeIn(maxWidth = 320.dp, maxHeight = 320.dp),
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 AdaptiveTimerText(
                     text = dayLabel,
                     color = palette.textPrimary,
-                    maxWidthFraction = 0.62f,
+                    baseFontSize = MaterialTheme.typography.displayMedium.fontSize,
+                    maxWidthFraction = 0.6f,
                     modifier = Modifier.semantics {
                         contentDescription = context.getString(R.string.home_timer_cd_x, dayLabel)
                     },
@@ -662,6 +690,53 @@ private fun ActiveSessionView(
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
         )
+    }
+}
+
+@Composable
+private fun ModeDropdown(
+    modes: List<FocusMode>,
+    selected: FocusMode?,
+    onSelect: (Long) -> Unit,
+) {
+    val palette = LocalFocusPalette.current
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        TextButton(
+            onClick = { if (modes.size > 1) expanded = true },
+            enabled = modes.size > 1,
+        ) {
+            Text(
+                selected?.name ?: stringResource(R.string.home_select_mode),
+                style = MaterialTheme.typography.titleMedium,
+                color = palette.textSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.width(160.dp),
+                textAlign = TextAlign.Center,
+            )
+            if (modes.size > 1) {
+                Icon(
+                    Icons.Filled.ArrowDropDown,
+                    contentDescription = stringResource(R.string.home_mode_dropdown_cd),
+                    tint = palette.textSecondary,
+                )
+            }
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            modes.forEach { mode ->
+                DropdownMenuItem(
+                    text = { Text(mode.name) },
+                    onClick = {
+                        onSelect(mode.id)
+                        expanded = false
+                    },
+                )
+            }
+        }
     }
 }
 

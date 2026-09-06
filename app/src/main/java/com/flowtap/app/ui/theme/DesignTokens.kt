@@ -35,9 +35,14 @@ object Dimens {
     val primaryButtonHeight = 56.dp
     val presetMinHeight = 48.dp
     val cardBorderWidth = 1.dp
-    val heroRingIdle = 160.dp
-    val heroRingActive = 260.dp
+    /** Unified hero ring: idle and active Home timers share one spec so sizes can't drift. */
+    val heroRing = 240.dp
+    val heroRingCompact = 180.dp
     val heroRingHistory = 170.dp
+    val heroRingStroke = 12.dp
+    // Kept for binary-compat during migration; use heroRing instead.
+    val heroRingIdle = heroRing
+    val heroRingActive = heroRing
 }
 
 object Motion {

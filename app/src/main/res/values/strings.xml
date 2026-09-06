@@ -65,6 +65,8 @@
     <string name="home_deep_work_fallback">Deep work</string>
     <string name="home_session_active">Session active</string>
     <string name="home_timer_cd_x">%1$s focused today</string>
+    <string name="home_select_mode">Select mode</string>
+    <string name="home_mode_dropdown_cd">Choose mode to preview</string>
 
     <!-- Tags & modes -->
     <string name="tags_title">Tags</string>
@@ -139,6 +141,12 @@
     <string name="modes_tags_sub">Tap tags to pair them with this mode — they move here on save</string>
     <string name="modes_tags_now_x">Now: %1$s</string>
     <string name="modes_tags_empty">No other tags to pair — add one from the Tags tab.</string>
+    <string name="modes_goal_title">Daily goal for this mode</string>
+    <string name="modes_goal_sub">How much focused time counts as a complete day for this mode</string>
+    <string name="modes_goal_hours">Hours (0–24)</string>
+    <string name="modes_goal_minutes">Minutes (0–59)</string>
+    <string name="modes_goal_preview_x">Goal: %1$s per day</string>
+    <string name="modes_chip_goal_x">Goal %1$s</string>
 
     <!-- History -->
     <string name="history_title">History</string>
@@ -162,12 +170,23 @@
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
-    <string name="settings_subtitle">Goals, protection and behavior</string>
+    <string name="settings_subtitle">Protection and behavior</string>
     <string name="settings_locked_1">Settings are locked while a hardcore session is running.</string>
     <string name="settings_locked_2">End the session with your NFC tag to change them.</string>
-    <string name="settings_goals">Goals</string>
-    <string name="settings_daily_goal">Daily goal</string>
-    <string name="settings_weekly_goal">Weekly goal</string>
+    <string name="settings_blocking_method">Blocking method</string>
+    <string name="settings_blocking_full">Full power (recommended)</string>
+    <string name="settings_blocking_full_sub">Instant blocking via accessibility. Some banking apps refuse to open while it is on.</string>
+    <string name="settings_blocking_compat">Compatibility</string>
+    <string name="settings_blocking_compat_sub">~2s delay, uses more battery. Use when banking apps must work or without accessibility.</string>
+    <string name="settings_payment_title">Banking apps detected</string>
+    <string name="settings_payment_sub">They refuse to open while full-power blocking is on. Switch to compatibility mode.</string>
+    <string name="settings_payment_action">Switch to compatibility</string>
+    <string name="settings_perm_usage">Usage access</string>
+    <string name="settings_perm_usage_on">Allowed — compatibility mode can see the foreground app</string>
+    <string name="settings_perm_usage_off">Allow usage access for compatibility blocking</string>
+    <string name="settings_perm_overlay">Draw over apps</string>
+    <string name="settings_perm_overlay_on">Allowed — block screen can appear without accessibility</string>
+    <string name="settings_perm_overlay_off">Allow drawing over apps for compatibility blocking</string>
     <string name="settings_protection">Protection</string>
     <string name="settings_uninstall_prot">Uninstall protection</string>
     <string name="settings_admin_explanation">While FlowTap is a device administrator, it cannot be uninstalled. This protects your focus sessions from impulsive removal.</string>
@@ -237,6 +256,13 @@
     <string name="ob_perm_not_granted">Not granted</string>
     <string name="ob_block_title">Block distracting apps</string>
     <string name="ob_block_sub">Select apps that should be blocked during Deep Work.</string>
+    <string name="ob_hardcore_title">Hardcore mode</string>
+    <string name="ob_hardcore_sub">Disables the End button and locks settings while a session runs. End with your NFC tag.</string>
+    <string name="ob_method_title">Blocking method</string>
+    <string name="ob_method_full">Full power (recommended)</string>
+    <string name="ob_method_full_sub">Instant blocking. Some banking apps refuse to open while it is on.</string>
+    <string name="ob_method_compat">Compatibility</string>
+    <string name="ob_method_compat_sub">~2s delay, more battery. Works without accessibility; banking apps keep working.</string>
     <string name="ob_search">Search apps</string>
     <string name="ob_clear_search">Clear search</string>
     <string name="ob_no_apps">No apps found</string>

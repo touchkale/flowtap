@@ -2,6 +2,7 @@ package com.flowtap.app.data.repo
 
 import com.flowtap.app.data.model.SessionRecord
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Calendar
 
@@ -20,6 +21,17 @@ class StatsCalculatorTest {
             endedAt = if (ended) startedAt + durationMs else 0,
             durationMs = if (ended) durationMs else 0,
         )
+
+    private fun sessionFor(
+        modeId: Long,
+        startedAt: Long,
+        durationMs: Long = 60 * 60_000L,
+    ): SessionRecord = SessionRecord(
+        modeId = modeId,
+        startedAt = startedAt,
+        endedAt = startedAt + durationMs,
+        durationMs = durationMs,
+    )
 
     @Test
     fun computeTodayTotal_onlyCountsTodayAndCompleted() {
@@ -111,5 +123,25 @@ class StatsCalculatorTest {
         val week = StatsCalculator.computeWeek(emptyList())
         assertEquals(7, week.days.size)
         assertEquals(0L, week.totalMs)
+    }
+
+    @Test
+    fun computeTodayTotalByMode_splitsPerMode() {
+        val today = day(Calendar.SEPTEMBER, 2, 9)
+        val now = day(Calendar.SEPTEMBER, 2, 18)
+        val list = listOf(
+            sessionFor(1, today, 60 * 60_000L),
+            sessionFor(2, today + 3_600_000, 30 * 60_000L),
+            sessionFor(1, day(Calendar.SEPTEMBER, 1, 10), 120 * 60_000L), // yesterday excluded
+        )
+        val byMode = StatsCalculator.computeTodayTotalByMode(list, now)
+        assertEquals(60 * 60_000L, byMode[1])
+        assertEquals(30 * 60_000L, byMode[2])
+        assertEquals(2, byMode.size)
+    }
+
+    @Test
+    fun computeTodayTotalByMode_empty() {
+        assertTrue(StatsCalculator.computeTodayTotalByMode(emptyList()).isEmpty())
     }
 }

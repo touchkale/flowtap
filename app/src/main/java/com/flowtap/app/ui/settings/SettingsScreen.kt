@@ -22,7 +22,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.BrightnessAuto
-import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.LightMode
@@ -31,6 +30,7 @@ import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material.icons.outlined.Info
+import com.flowtap.app.data.prefs.BlockingMethod
 import com.flowtap.app.data.prefs.ThemeMode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -68,18 +68,14 @@ import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Spacing
 import com.flowtap.app.ui.util.rememberAdaptiveSidePadding
 
-private val DAILY_PRESETS_MIN = listOf(180, 240, 300, 360)
-private val WEEKLY_PRESETS_MIN = listOf(1200, 1500, 1800, 2100)
-
 @Composable
 fun SettingsScreen(container: AppContainer) {
     val context = LocalContext.current
     val vm: SettingsViewModel = viewModel(factory = SettingsViewModel.factory(container))
     val palette = LocalFocusPalette.current
 
-    val dailyGoal by vm.dailyGoalMinutes.collectAsStateWithLifecycle()
-    val weeklyGoal by vm.weeklyGoalMinutes.collectAsStateWithLifecycle()
     val hardcore by vm.hardcoreMode.collectAsStateWithLifecycle()
+    val blockingMethod by vm.blockingMethod.collectAsStateWithLifecycle()
     val keepAwake by vm.keepScreenAwake.collectAsStateWithLifecycle()
     val dndMaster by vm.dndMasterEnabled.collectAsStateWithLifecycle()
     val themeMode by vm.themeMode.collectAsStateWithLifecycle()
@@ -95,6 +91,21 @@ fun SettingsScreen(container: AppContainer) {
     val blockingActive = remember(refreshTick) { Permissions.isAccessibilityEnabled(context) }
     val dndGranted = remember(refreshTick) { Permissions.isDndGranted(context) }
     val notifGranted = remember(refreshTick) { Permissions.areNotificationsGranted(context) }
+    val usageGranted = remember(refreshTick) { Permissions.isUsageAccessGranted(context) }
+    val overlayGranted = remember(refreshTick) { Permissions.canDrawOverlays(context) }
+    val paymentInstalled = remember(refreshTick) {
+        runCatching {
+            val pm = context.packageManager
+            val intent = android.content.Intent(
+                android.content.Intent.ACTION_MAIN,
+            ).addCategory(android.content.Intent.CATEGORY_LAUNCHER)
+            val installed = pm.queryIntentActivities(intent, 0)
+                .map { it.activityInfo.packageName }.toSet()
+            com.flowtap.app.util.PaymentApps.installed(installed)
+        }.getOrDefault(emptyList())
+    }
+    val showPaymentNudge = paymentInstalled.isNotEmpty() &&
+        blockingMethod == BlockingMethod.FULL_POWER
     val sidePadding = rememberAdaptiveSidePadding()
 
     // MainNav's Scaffold already applies the status-bar inset; only the
@@ -147,23 +158,57 @@ fun SettingsScreen(container: AppContainer) {
                 Spacer(Modifier.height(Spacing.cardGap))
             }
 
-            SectionHeader(title = stringResource(R.string.settings_goals))
+            SectionHeader(title = stringResource(R.string.settings_blocking_method))
             Spacer(Modifier.height(Spacing.headerGap))
-            GoalCard(
-                title = stringResource(R.string.settings_daily_goal),
-                current = dailyGoal,
-                presets = DAILY_PRESETS_MIN,
+            BlockingMethodCard(
+                current = blockingMethod,
                 enabled = !locked,
-                onSelect = { vm.setDailyGoal(it) },
+                onSelect = { vm.setBlockingMethod(it) },
             )
-            Spacer(Modifier.height(Spacing.rowGap))
-            GoalCard(
-                title = stringResource(R.string.settings_weekly_goal),
-                current = weeklyGoal,
-                presets = WEEKLY_PRESETS_MIN,
-                enabled = !locked,
-                onSelect = { vm.setWeeklyGoal(it) },
-            )
+            if (showPaymentNudge) {
+                Spacer(Modifier.height(Spacing.rowGap))
+                PaymentNudgeCard(
+                    onSwitch = { vm.setBlockingMethod(BlockingMethod.COMPATIBILITY) },
+                )
+            }
+            if (blockingMethod == BlockingMethod.COMPATIBILITY) {
+                Spacer(Modifier.height(Spacing.rowGap))
+                SettingRow(
+                    title = stringResource(R.string.settings_perm_usage),
+                    subtitle = if (usageGranted) {
+                        stringResource(R.string.settings_perm_usage_on)
+                    } else {
+                        stringResource(R.string.settings_perm_usage_off)
+                    },
+                    icon = Icons.Outlined.Info,
+                    trailing = if (usageGranted) {
+                        stringResource(R.string.common_on)
+                    } else {
+                        stringResource(R.string.common_off)
+                    },
+                    enabled = true,
+                    active = usageGranted,
+                    onClick = { Permissions.openUsageAccessSettings(context) },
+                )
+                Spacer(Modifier.height(Spacing.rowGap))
+                SettingRow(
+                    title = stringResource(R.string.settings_perm_overlay),
+                    subtitle = if (overlayGranted) {
+                        stringResource(R.string.settings_perm_overlay_on)
+                    } else {
+                        stringResource(R.string.settings_perm_overlay_off)
+                    },
+                    icon = Icons.Outlined.Info,
+                    trailing = if (overlayGranted) {
+                        stringResource(R.string.common_on)
+                    } else {
+                        stringResource(R.string.common_off)
+                    },
+                    enabled = true,
+                    active = overlayGranted,
+                    onClick = { Permissions.openOverlaySettings(context) },
+                )
+            }
 
             Spacer(Modifier.height(Spacing.sectionGap))
             SectionHeader(title = stringResource(R.string.settings_protection))
@@ -446,12 +491,10 @@ private fun ThemeCard(
 }
 
 @Composable
-private fun GoalCard(
-    title: String,
-    current: Int,
-    presets: List<Int>,
+private fun BlockingMethodCard(
+    current: BlockingMethod,
     enabled: Boolean,
-    onSelect: (Int) -> Unit,
+    onSelect: (BlockingMethod) -> Unit,
 ) {
     val palette = LocalFocusPalette.current
     Column(
@@ -460,49 +503,101 @@ private fun GoalCard(
             .background(palette.card, MaterialTheme.shapes.medium)
             .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
             .padding(Spacing.cardPadding),
+        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
-        Text(title, style = MaterialTheme.typography.titleMedium, color = palette.textPrimary)
-        Spacer(Modifier.height(Spacing.sm))
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            presets.forEach { minutes ->
-                val selected = current == minutes
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = Dimens.presetMinHeight)
-                        .background(
-                            if (selected) palette.accent else palette.ringTrack,
-                            MaterialTheme.shapes.small,
-                        )
-                        .border(
-                            Dimens.cardBorderWidth,
-                            if (selected) palette.accent else palette.cardBorder,
-                            MaterialTheme.shapes.small,
-                        )
-                        .clip(MaterialTheme.shapes.small)
-                        .clickable(enabled = enabled, role = Role.RadioButton) { onSelect(minutes) }
-                        .padding(vertical = Spacing.md, horizontal = Spacing.sm),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (selected) {
-                        androidx.compose.material3.Icon(
-                            Icons.Outlined.CheckCircle,
-                            contentDescription = null,
-                            tint = if (enabled) MaterialTheme.colorScheme.onPrimary else palette.textSecondary,
-                            modifier = Modifier.size(14.dp),
-                        )
-                        Spacer(Modifier.size(Spacing.xs))
-                    }
-                    Text(
-                        text = "${minutes / 60}h",
-                        style = MaterialTheme.typography.labelLarge,
-                        textAlign = TextAlign.Center,
-                        color = if (selected) MaterialTheme.colorScheme.onPrimary else palette.textSecondary,
-                    )
-                }
-            }
+        BlockingMethodRow(
+            title = stringResource(R.string.settings_blocking_full),
+            subtitle = stringResource(R.string.settings_blocking_full_sub),
+            selected = current == BlockingMethod.FULL_POWER,
+            enabled = enabled,
+            onClick = { onSelect(BlockingMethod.FULL_POWER) },
+        )
+        BlockingMethodRow(
+            title = stringResource(R.string.settings_blocking_compat),
+            subtitle = stringResource(R.string.settings_blocking_compat_sub),
+            selected = current == BlockingMethod.COMPATIBILITY,
+            enabled = enabled,
+            onClick = { onSelect(BlockingMethod.COMPATIBILITY) },
+        )
+    }
+}
+
+@Composable
+private fun BlockingMethodRow(
+    title: String,
+    subtitle: String,
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val palette = LocalFocusPalette.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                if (selected) palette.accent else palette.ringTrack,
+                MaterialTheme.shapes.small,
+            )
+            .border(
+                Dimens.cardBorderWidth,
+                if (selected) palette.accent else palette.cardBorder,
+                MaterialTheme.shapes.small,
+            )
+            .clip(MaterialTheme.shapes.small)
+            .clickable(enabled = enabled, role = Role.RadioButton, onClick = onClick)
+            .padding(Spacing.cardPadding),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                color = if (selected) MaterialTheme.colorScheme.onPrimary else palette.textPrimary,
+            )
+            Spacer(Modifier.height(Spacing.xxs))
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                else palette.textSecondary,
+            )
         }
+    }
+}
+
+@Composable
+private fun PaymentNudgeCard(onSwitch: () -> Unit) {
+    val palette = LocalFocusPalette.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(palette.card, MaterialTheme.shapes.medium)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
+            .padding(Spacing.cardPadding),
+        verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+    ) {
+        Text(
+            stringResource(R.string.settings_payment_title),
+            style = MaterialTheme.typography.titleMedium,
+            color = palette.textPrimary,
+        )
+        Text(
+            stringResource(R.string.settings_payment_sub),
+            style = MaterialTheme.typography.labelLarge,
+            color = palette.textSecondary,
+        )
+        Spacer(Modifier.height(Spacing.xs))
+        androidx.compose.material3.Button(
+            onClick = onSwitch,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.settings_payment_action))
+        }
+        Text(
+            stringResource(R.string.settings_blocking_compat_sub),
+            style = MaterialTheme.typography.labelLarge,
+            color = palette.textTertiary,
+        )
     }
 }
 

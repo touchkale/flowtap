@@ -18,6 +18,7 @@ fun ModeEntity.toDomain(): FocusMode = FocusMode(
     allowlistOnly = allowlistOnly,
     allowedApps = runCatching { Json.decodeStringList(allowedAppsJson) }.getOrDefault(emptyList()),
     launchPackage = launchPackage?.takeIf { it.isNotBlank() },
+    dailyGoalMinutes = dailyGoalMinutes.takeIf { it > 0 } ?: 300,
     createdAt = createdAt,
 )
 
@@ -34,6 +35,7 @@ fun FocusMode.toEntity(): ModeEntity = ModeEntity(
     allowlistOnly = allowlistOnly,
     allowedAppsJson = Json.encodeStringList(allowedApps),
     launchPackage = launchPackage?.takeIf { it.isNotBlank() },
+    dailyGoalMinutes = dailyGoalMinutes.coerceIn(1, 1440),
     createdAt = createdAt,
 )
 

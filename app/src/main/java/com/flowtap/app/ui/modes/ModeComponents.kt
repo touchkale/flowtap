@@ -82,6 +82,13 @@ fun formatAutoEnd(minutes: Int): String = when {
     else -> "${minutes / 60}h ${minutes % 60}m"
 }
 
+fun formatGoalShort(totalMinutes: Int): String = when {
+    totalMinutes <= 0 -> "0m"
+    totalMinutes < 60 -> "${totalMinutes}m"
+    totalMinutes % 60 == 0 -> "${totalMinutes / 60}h"
+    else -> "${totalMinutes / 60}h ${totalMinutes % 60}m"
+}
+
 private val AUTO_PRESETS = listOf(15, 25, 30, 45, 60, 90)
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -183,6 +190,13 @@ fun ModeCard(
                         icon = Icons.Outlined.Timer,
                     )
                 }
+                StatusChip(
+                    text = stringResource(
+                        R.string.modes_chip_goal_x,
+                        formatGoalShort(mode.dailyGoalMinutes),
+                    ),
+                    icon = Icons.Outlined.Timer,
+                )
                 if (mode.launchPackage != null) {
                     StatusChip(
                         text = stringResource(
@@ -217,13 +231,18 @@ class ModeEditorState(val initial: FocusMode) {
     var blocked by mutableStateOf(initial.blockedApps.toSet())
     var allowed by mutableStateOf(initial.allowedApps.toSet())
     var launchPkg by mutableStateOf(initial.launchPackage)
+    var goalHours by mutableStateOf((initial.dailyGoalMinutes.coerceIn(5, 1440)) / 60)
+    var goalMinutes by mutableStateOf((initial.dailyGoalMinutes.coerceIn(5, 1440)) % 60)
 
     val customValid: Boolean get() {
         val v = customMinutes.trim().toIntOrNull()
         return v != null && v in 5..720
     }
 
-    val saveEnabled: Boolean get() = name.isNotBlank() && (customMinutes.isBlank() || customValid)
+    val goalTotalMinutes: Int get() = (goalHours * 60 + goalMinutes).coerceIn(5, 1440)
+    val goalValid: Boolean get() = goalTotalMinutes in 5..1440
+
+    val saveEnabled: Boolean get() = name.isNotBlank() && (customMinutes.isBlank() || customValid) && goalValid
 
     private val resolvedAutoEnd: Int? get() = if (customMinutes.isNotBlank()) {
         customMinutes.trim().toIntOrNull()?.takeIf { it in 5..720 } ?: autoEnd
@@ -241,6 +260,7 @@ class ModeEditorState(val initial: FocusMode) {
         blockedApps = blocked.toList(),
         allowedApps = allowed.toList(),
         launchPackage = launchPkg,
+        dailyGoalMinutes = goalTotalMinutes,
     )
 
     fun isDirty(): Boolean = buildUpdated() != initial
@@ -398,6 +418,24 @@ fun ModeEditorForm(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = state.customMinutes.isNotBlank() && !state.customValid,
                     modifier = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(Modifier.height(Spacing.md))
+                Text(
+                    stringResource(R.string.modes_goal_title),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    stringResource(R.string.modes_goal_sub),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(Spacing.xs))
+                GoalPicker(
+                    hours = state.goalHours,
+                    minutes = state.goalMinutes,
+                    onHoursChange = { state.goalHours = it.coerceIn(0, 24) },
+                    onMinutesChange = { state.goalMinutes = it.coerceIn(0, 59) },
                 )
 
                 Spacer(Modifier.height(Spacing.md))
@@ -634,6 +672,54 @@ private fun AutoEndChip(
             color = if (isSelected) MaterialTheme.colorScheme.onPrimary else palette.textSecondary,
         )
     }
+}
+
+/**
+ * Per-mode daily goal picker: hours 0–24 + minutes 0–59, 1-minute granularity.
+ * Displays hour-only like "5h" unless minutes are set, then "5h 30m".
+ */
+@Composable
+private fun GoalPicker(
+    hours: Int,
+    minutes: Int,
+    onHoursChange: (Int) -> Unit,
+    onMinutesChange: (Int) -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        OutlinedTextField(
+            value = hours.toString(),
+            onValueChange = { input ->
+                input.filter { c -> c.isDigit() }.take(2).toIntOrNull()?.let {
+                    onHoursChange(it.coerceIn(0, 24))
+                } ?: run { if (input.isEmpty()) onHoursChange(0) }
+            },
+            label = { Text(stringResource(R.string.modes_goal_hours)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.weight(1f),
+        )
+        OutlinedTextField(
+            value = minutes.toString(),
+            onValueChange = { input ->
+                input.filter { c -> c.isDigit() }.take(2).toIntOrNull()?.let {
+                    onMinutesChange(it.coerceIn(0, 59))
+                } ?: run { if (input.isEmpty()) onMinutesChange(0) }
+            },
+            label = { Text(stringResource(R.string.modes_goal_minutes)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.weight(1f),
+        )
+    }
+    Spacer(Modifier.height(Spacing.xs))
+    Text(
+        stringResource(
+            R.string.modes_goal_preview_x,
+            formatGoalShort((hours * 60 + minutes).coerceIn(5, 1440)),
+        ),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Composable

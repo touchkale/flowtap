@@ -13,6 +13,9 @@ class StatsRepository(private val repository: FocusRepository) {
 
     fun observeTodayTotalMs(): Flow<Long> = sessions.map { StatsCalculator.computeTodayTotalMs(it) }
 
+    fun observeTodayTotalByMode(): Flow<Map<Long, Long>> =
+        sessions.map { StatsCalculator.computeTodayTotalByMode(it) }
+
     fun observeWeek(): Flow<WeekStats> = sessions.map { StatsCalculator.computeWeek(it) }
 
     fun observeStreakDays(): Flow<Int> = sessions.map { StatsCalculator.computeStreakDays(it) }

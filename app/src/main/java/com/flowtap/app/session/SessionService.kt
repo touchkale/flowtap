@@ -1,14 +1,21 @@
 package com.flowtap.app.session
 
 import android.app.Service
+import android.app.usage.UsageEvents
+import android.app.usage.UsageStatsManager
+import android.content.Context
 import android.content.Intent
-import android.os.IBinder
+import android.os.SystemClock
+import com.flowtap.app.blocking.BlockOverlayActivity
+import com.flowtap.app.data.prefs.BlockingMethod
 import com.flowtap.app.util.Notifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -24,6 +31,7 @@ import kotlinx.coroutines.withContext
 class SessionService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var compatJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -46,10 +54,86 @@ class SessionService : Service() {
                         Notifications.sessionNotification(this@SessionService, snap),
                     )
                     scheduleTimeout(snap)
+                    startCompatPolling()
                 }
             }
         }
         return START_STICKY
+    }
+
+    /**
+     * Compatibility blocking: polls UsageStatsManager every 2s when the user
+     * chose COMPATIBILITY mode. Slow and battery-heavy by design — disclosed
+     * in onboarding + Settings — but works without accessibility so banking
+     * apps keep working.
+     */
+    private fun startCompatPolling() {
+        compatJob?.cancel()
+        compatJob = scope.launch {
+            val container = (application as com.flowtap.app.FlowtapApp).container
+            var lastBlockedAt = 0L
+            while (true) {
+                delay(2000)
+                val snap = SessionManager.current ?: continue
+                val method = runCatching {
+                    container.settingsDataStore.blockingMethod.first()
+                }.getOrDefault(BlockingMethod.FULL_POWER)
+                if (method != BlockingMethod.COMPATIBILITY) continue
+                val pkg = queryForegroundPackage() ?: continue
+                if (pkg == packageName) continue
+                if (pkg == "com.android.systemui" || pkg == "android") continue
+                val blocked = UsageBlockPoller.isBlocked(
+                    pkg = pkg,
+                    blockedApps = snap.blockedApps,
+                    allowlistOnly = snap.allowlistOnly,
+                    allowedApps = snap.allowedApps,
+                )
+                if (!blocked) continue
+                val now = SystemClock.elapsedRealtime()
+                if (now - lastBlockedAt < 2000) continue
+                lastBlockedAt = now
+                // HOME via intent (no accessibility GLOBAL_ACTION_HOME here);
+                // the blocked app may flash for a frame — unavoidable, disclosed.
+                runCatching {
+                    startActivity(
+                        Intent(Intent.ACTION_MAIN)
+                            .addCategory(Intent.CATEGORY_HOME)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    )
+                }
+                runCatching {
+                    startActivity(
+                        Intent(this@SessionService, BlockOverlayActivity::class.java)
+                            .addFlags(
+                                Intent.FLAG_ACTIVITY_NEW_TASK or
+                                    Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                            ),
+                    )
+                }
+            }
+        }
+    }
+
+    private fun queryForegroundPackage(): String? {
+        return runCatching {
+            val usm = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+            val now = System.currentTimeMillis()
+            val events = usm.queryEvents(now - 10_000, now)
+            val collected = mutableListOf<UsageBlockPoller.ForegroundEvent>()
+            while (events.hasNextEvent()) {
+                val e = UsageEvents.Event()
+                events.getNextEvent(e)
+                if (e.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                    collected.add(
+                        UsageBlockPoller.ForegroundEvent(
+                            packageName = e.packageName ?: continue,
+                            timeMs = e.timeStamp,
+                        ),
+                    )
+                }
+            }
+            UsageBlockPoller.currentPackage(collected, now, windowMs = 5000L)
+        }.getOrNull()
     }
 
     private fun scheduleTimeout(snap: com.flowtap.app.data.model.ActiveSessionSnapshot) {
@@ -66,9 +150,10 @@ class SessionService : Service() {
         }
     }
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    override fun onBind(intent: Intent?): android.os.IBinder? = null
 
     override fun onDestroy() {
+        compatJob?.cancel()
         scope.cancel()
         super.onDestroy()
     }

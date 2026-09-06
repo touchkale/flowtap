@@ -14,14 +14,14 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(private val settings: SettingsDataStore) : ViewModel() {
 
-    val dailyGoalMinutes: StateFlow<Int> = settings.dailyGoalMinutes
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsDataStore.DEFAULT_DAILY_GOAL_MIN)
-
-    val weeklyGoalMinutes: StateFlow<Int> = settings.weeklyGoalMinutes
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsDataStore.DEFAULT_WEEKLY_GOAL_MIN)
-
     val hardcoreMode: StateFlow<Boolean> = settings.hardcoreMode
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val blockingMethod: StateFlow<com.flowtap.app.data.prefs.BlockingMethod> = settings.blockingMethod
+        .stateIn(
+            viewModelScope, SharingStarted.WhileSubscribed(5000),
+            com.flowtap.app.data.prefs.BlockingMethod.FULL_POWER,
+        )
 
     val keepScreenAwake: StateFlow<Boolean> = settings.keepScreenAwake
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
@@ -32,16 +32,12 @@ class SettingsViewModel(private val settings: SettingsDataStore) : ViewModel() {
     val dndMasterEnabled: StateFlow<Boolean> = settings.dndMasterEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
-    fun setDailyGoal(minutes: Int) {
-        viewModelScope.launch { settings.setDailyGoal(minutes) }
-    }
-
-    fun setWeeklyGoal(minutes: Int) {
-        viewModelScope.launch { settings.setWeeklyGoal(minutes) }
-    }
-
     fun setHardcore(enabled: Boolean) {
         viewModelScope.launch { settings.setHardcoreMode(enabled) }
+    }
+
+    fun setBlockingMethod(method: com.flowtap.app.data.prefs.BlockingMethod) {
+        viewModelScope.launch { settings.setBlockingMethod(method) }
     }
 
     fun setKeepScreenAwake(enabled: Boolean) {

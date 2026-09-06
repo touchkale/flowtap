@@ -24,9 +24,20 @@ class HistoryViewModel(
     val week: StateFlow<WeekStats> = stats.observeWeek()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WeekStats(emptyList(), 0L))
 
-    val weeklyGoalMs: StateFlow<Long> = settings.weeklyGoalMinutes
-        .map { it * 60_000L }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsDataStore.DEFAULT_WEEKLY_GOAL_MIN * 60_000L)
+    val modes: StateFlow<List<com.flowtap.app.data.model.FocusMode>> = repo.modes
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** Weekly target is derived: 7 x sum(per-mode daily goals). No global UI. */
+    val weeklyGoalMs: StateFlow<Long> = repo.modes
+        .map { list ->
+            val dailySumMin = if (list.isEmpty()) SettingsDataStore.DEFAULT_DAILY_GOAL_MIN
+            else list.sumOf { it.dailyGoalMinutes }
+            dailySumMin * 7 * 60_000L
+        }
+        .stateIn(
+            viewModelScope, SharingStarted.WhileSubscribed(5000),
+            SettingsDataStore.DEFAULT_WEEKLY_GOAL_MIN * 60_000L,
+        )
 
     val streakDays: StateFlow<Int> = stats.observeStreakDays()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)

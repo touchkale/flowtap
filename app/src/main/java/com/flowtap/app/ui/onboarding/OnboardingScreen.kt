@@ -159,7 +159,7 @@ fun OnboardingScreen(
                     showBanner = pairedBanner,
                     onNext = { vm.next() },
                 )
-                2 -> PermissionsStep(onNext = { vm.next() })
+                2 -> PermissionsStep(vm = vm, onNext = { vm.next() })
                 3 -> BlockedAppsStep(vm, onDone = onDone)
             }
         }
@@ -372,12 +372,16 @@ private data class PermChecks(
 )
 
 @Composable
-private fun PermissionsStep(onNext: () -> Unit) {
+private fun PermissionsStep(vm: OnboardingViewModel, onNext: () -> Unit) {
     val context = LocalContext.current
     val palette = LocalFocusPalette.current
     // Permission rows refresh via launcher callbacks + resume (no polling).
     var refreshTick by remember { mutableStateOf(0) }
     var notifAsked by rememberSaveable { mutableStateOf(false) }
+    val hardcore by vm.hardcoreMode.collectAsStateWithLifecycle(initialValue = false)
+    val blockingMethod by vm.blockingMethod.collectAsStateWithLifecycle(
+        initialValue = com.flowtap.app.data.prefs.BlockingMethod.FULL_POWER,
+    )
 
     val notifLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -493,6 +497,74 @@ private fun PermissionsStep(onNext: () -> Unit) {
             items(items, key = { it.title }) { item ->
                 PermRow(item)
             }
+            item(key = "blocking_method") {
+                Text(
+                    stringResource(R.string.ob_method_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = palette.textPrimary,
+                )
+                Spacer(Modifier.height(Spacing.xs))
+                MethodRow(
+                    title = stringResource(R.string.ob_method_full),
+                    subtitle = stringResource(R.string.ob_method_full_sub),
+                    selected = blockingMethod ==
+                        com.flowtap.app.data.prefs.BlockingMethod.FULL_POWER,
+                    onClick = {
+                        vm.setBlockingMethod(
+                            com.flowtap.app.data.prefs.BlockingMethod.FULL_POWER,
+                        )
+                    },
+                )
+                Spacer(Modifier.height(Spacing.xs))
+                MethodRow(
+                    title = stringResource(R.string.ob_method_compat),
+                    subtitle = stringResource(R.string.ob_method_compat_sub),
+                    selected = blockingMethod ==
+                        com.flowtap.app.data.prefs.BlockingMethod.COMPATIBILITY,
+                    onClick = {
+                        vm.setBlockingMethod(
+                            com.flowtap.app.data.prefs.BlockingMethod.COMPATIBILITY,
+                        )
+                    },
+                )
+            }
+            item(key = "hardcore") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(palette.card, MaterialTheme.shapes.medium)
+                        .border(
+                            Dimens.cardBorderWidth,
+                            palette.cardBorder,
+                            MaterialTheme.shapes.medium,
+                        )
+                        .clip(MaterialTheme.shapes.medium)
+                        .toggleable(
+                            value = hardcore,
+                            onValueChange = { vm.setHardcore(it) },
+                            role = Role.Switch,
+                        )
+                        .padding(Spacing.cardPadding),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.ob_hardcore_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = palette.textPrimary,
+                        )
+                        Text(
+                            stringResource(R.string.ob_hardcore_sub),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = palette.textSecondary,
+                        )
+                    }
+                    androidx.compose.material3.Switch(
+                        checked = hardcore,
+                        onCheckedChange = null,
+                    )
+                }
+            }
         }
         Spacer(Modifier.height(Spacing.lg))
         Button(
@@ -507,6 +579,48 @@ private fun PermissionsStep(onNext: () -> Unit) {
             )
         }
         Spacer(Modifier.height(Spacing.lg))
+    }
+}
+
+@Composable
+private fun MethodRow(
+    title: String,
+    subtitle: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val palette = LocalFocusPalette.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                if (selected) palette.accent else palette.card,
+                MaterialTheme.shapes.medium,
+            )
+            .border(
+                Dimens.cardBorderWidth,
+                if (selected) palette.accent else palette.cardBorder,
+                MaterialTheme.shapes.medium,
+            )
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick, role = Role.Button)
+            .padding(Spacing.cardPadding),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                color = if (selected) MaterialTheme.colorScheme.onPrimary
+                else palette.textPrimary,
+            )
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                else palette.textSecondary,
+            )
+        }
     }
 }
 

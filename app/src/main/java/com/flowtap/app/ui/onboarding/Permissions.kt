@@ -147,6 +147,38 @@ object Permissions {
         }
     }
 
+    /** UsageStats access for compatibility blocking (AppOps check). */
+    fun isUsageAccessGranted(context: Context): Boolean {
+        return runCatching {
+            val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as android.app.AppOpsManager
+            val mode = appOps.checkOpNoThrow(
+                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(),
+                context.packageName,
+            )
+            mode == android.app.AppOpsManager.MODE_ALLOWED
+        }.getOrDefault(false)
+    }
+
+    fun openUsageAccessSettings(context: Context) {
+        runCatching { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+    }
+
+    /** Draw-over-apps for compatibility overlay windows. */
+    fun canDrawOverlays(context: Context): Boolean =
+        Settings.canDrawOverlays(context)
+
+    fun openOverlaySettings(context: Context) {
+        runCatching {
+            context.startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    android.net.Uri.parse("package:${context.packageName}"),
+                ),
+            )
+        }
+    }
+
     /** Android 16+ gate on receiving NFC tag intents. */
     fun isNfcTagIntentAllowed(context: Context): Boolean {
         if (Build.VERSION.SDK_INT < 36) return true

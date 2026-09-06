@@ -38,6 +38,17 @@ object StatsCalculator {
         return list.filter { it.endedAt > 0 && it.startedAt >= todayStart }.sumOf { it.durationMs }
     }
 
+    /** Per-mode today totals (completed sessions only), for the Home dropdown. */
+    fun computeTodayTotalByMode(
+        list: List<SessionRecord>,
+        now: Long = System.currentTimeMillis(),
+    ): Map<Long, Long> {
+        val todayStart = TimeUtil.localDayStart(now)
+        return list.filter { it.endedAt > 0 && it.startedAt >= todayStart }
+            .groupBy { it.modeId }
+            .mapValues { (_, sessions) -> sessions.sumOf { it.durationMs } }
+    }
+
     fun computeStreakDays(list: List<SessionRecord>, now: Long = System.currentTimeMillis()): Int {
         val qualifying = list
             .filter { it.endedAt > 0 && it.durationMs >= MIN_STREAK_DAY_MS }
