@@ -175,6 +175,7 @@ fun StatusChip(
     text: String,
     icon: ImageVector? = null,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
 ) {
     val palette = LocalFocusPalette.current
     Row(
@@ -183,14 +184,27 @@ fun StatusChip(
             .border(Dimens.cardBorderWidth, palette.cardBorder, CircleShape)
             .clip(CircleShape)
             .semantics(mergeDescendants = true) { contentDescription = text }
-            .padding(horizontal = Spacing.md, vertical = Spacing.sm),
+            .padding(
+                horizontal = if (compact) Spacing.sm else Spacing.md,
+                vertical = if (compact) Spacing.xs else Spacing.sm,
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
         if (icon != null) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(14.dp), tint = palette.accentText)
+            Icon(
+                icon,
+                contentDescription = null,
+                modifier = Modifier.size(if (compact) 12.dp else 14.dp),
+                tint = palette.accentText,
+            )
         }
-        Text(text, style = MaterialTheme.typography.labelLarge, color = palette.textSecondary)
+        Text(
+            text,
+            style = if (compact) MaterialTheme.typography.labelMedium
+            else MaterialTheme.typography.labelLarge,
+            color = palette.textSecondary,
+        )
     }
 }
 

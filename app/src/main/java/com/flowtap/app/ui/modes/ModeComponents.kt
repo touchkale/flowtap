@@ -26,6 +26,8 @@ import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Launch
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.NotificationsOff
@@ -91,6 +93,9 @@ fun formatGoalShort(totalMinutes: Int): String = when {
 
 private val AUTO_PRESETS = listOf(15, 25, 30, 45, 60, 90)
 
+/** Daily-goal presets in minutes; the last chip opens the custom dialog. */
+private val GOAL_PRESETS = listOf(60, 120, 240, 360)
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ModeCard(
@@ -148,10 +153,13 @@ fun ModeCard(
                 verticalArrangement = Arrangement.spacedBy(Spacing.xs),
             ) {
                 StatusChip(
-                    text = if (mode.dndEnabled) {
-                        stringResource(R.string.tags_chip_dnd)
-                    } else {
-                        stringResource(R.string.tags_chip_no_dnd)
+                    text = when (mode.notificationMode) {
+                        com.flowtap.app.data.model.NotificationMode.DND ->
+                            stringResource(R.string.tags_chip_dnd)
+                        com.flowtap.app.data.model.NotificationMode.SILENT ->
+                            stringResource(R.string.modes_chip_silent)
+                        com.flowtap.app.data.model.NotificationMode.NONE ->
+                            stringResource(R.string.modes_chip_none)
                     },
                     icon = Icons.Outlined.NotificationsOff,
                 )
@@ -220,7 +228,7 @@ fun ModeCard(
  */
 class ModeEditorState(val initial: FocusMode) {
     var name by mutableStateOf(initial.name)
-    var dnd by mutableStateOf(initial.dndEnabled)
+    var notificationMode by mutableStateOf(initial.notificationMode)
     var strict by mutableStateOf(initial.strictMode)
     var keepAwake by mutableStateOf(initial.keepAwake)
     var autoEnd by mutableStateOf(initial.autoEndMinutes)
@@ -231,16 +239,15 @@ class ModeEditorState(val initial: FocusMode) {
     var blocked by mutableStateOf(initial.blockedApps.toSet())
     var allowed by mutableStateOf(initial.allowedApps.toSet())
     var launchPkg by mutableStateOf(initial.launchPackage)
-    var goalHours by mutableStateOf((initial.dailyGoalMinutes.coerceIn(5, 1440)) / 60)
-    var goalMinutes by mutableStateOf((initial.dailyGoalMinutes.coerceIn(5, 1440)) % 60)
+    var goalMinutes by mutableStateOf(initial.dailyGoalMinutes.coerceIn(5, 1440))
 
     val customValid: Boolean get() {
         val v = customMinutes.trim().toIntOrNull()
         return v != null && v in 5..720
     }
 
-    val goalTotalMinutes: Int get() = (goalHours * 60 + goalMinutes).coerceIn(5, 1440)
-    val goalValid: Boolean get() = goalTotalMinutes in 5..1440
+    val goalValid: Boolean get() = goalMinutes in 5..1440
+    val goalIsCustom: Boolean get() = goalMinutes !in GOAL_PRESETS
 
     val saveEnabled: Boolean get() = name.isNotBlank() && (customMinutes.isBlank() || customValid) && goalValid
 
@@ -252,7 +259,7 @@ class ModeEditorState(val initial: FocusMode) {
 
     fun buildUpdated(): FocusMode = initial.copy(
         name = name.trim(),
-        dndEnabled = dnd,
+        notificationMode = notificationMode,
         strictMode = strict,
         keepAwake = keepAwake,
         autoEndMinutes = resolvedAutoEnd,
@@ -260,7 +267,7 @@ class ModeEditorState(val initial: FocusMode) {
         blockedApps = blocked.toList(),
         allowedApps = allowed.toList(),
         launchPackage = launchPkg,
-        dailyGoalMinutes = goalTotalMinutes,
+        dailyGoalMinutes = goalMinutes.coerceIn(5, 1440),
     )
 
     fun isDirty(): Boolean = buildUpdated() != initial
@@ -314,109 +321,14 @@ fun ModeEditorForm(
     }
 
     Column(modifier = modifier) {
+                var customGoalOpen by remember { mutableStateOf(false) }
+                var advancedOpen by remember { mutableStateOf(false) }
+
                 OutlinedTextField(
                     value = state.name,
                     onValueChange = { state.name = it },
                     label = { Text(stringResource(R.string.tags_mode_name)) },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(Spacing.sm))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(MaterialTheme.shapes.small)
-                        .toggleable(
-                            value = state.dnd,
-                            onValueChange = { state.dnd = it },
-                            role = Role.Switch,
-                        )
-                        .padding(vertical = Spacing.sm),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            stringResource(R.string.tags_dnd),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                        Text(
-                            stringResource(R.string.tags_dnd_sub),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Switch(checked = state.dnd, onCheckedChange = null)
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(MaterialTheme.shapes.small)
-                        .toggleable(
-                            value = state.strict,
-                            onValueChange = { state.strict = it },
-                            role = Role.Switch,
-                        )
-                        .padding(vertical = Spacing.sm),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            stringResource(R.string.tags_strict),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                        Text(
-                            stringResource(R.string.tags_strict_sub),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Switch(checked = state.strict, onCheckedChange = null)
-                }
-
-                Spacer(Modifier.height(Spacing.md))
-                Text(
-                    stringResource(R.string.modes_keep_awake),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    stringResource(R.string.modes_keep_awake_sub),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(Spacing.xs))
-                KeepAwakeSelector(selected = state.keepAwake, onSelect = { state.keepAwake = it })
-
-                Spacer(Modifier.height(Spacing.md))
-                Text(
-                    stringResource(R.string.modes_auto_end),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    stringResource(R.string.modes_auto_end_sub),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(Spacing.xs))
-                AutoEndSelector(
-                    selected = state.autoEnd,
-                    onSelect = {
-                        state.autoEnd = it
-                        if (it == null || it in AUTO_PRESETS) state.customMinutes = ""
-                    },
-                )
-                Spacer(Modifier.height(Spacing.xs))
-                OutlinedTextField(
-                    value = state.customMinutes,
-                    onValueChange = { input ->
-                        state.customMinutes = input.filter { c -> c.isDigit() }.take(3)
-                        state.customMinutes.trim().toIntOrNull()?.takeIf { v -> v in 5..720 }?.let {
-                            state.autoEnd = it
-                        }
-                    },
-                    label = { Text(stringResource(R.string.modes_auto_custom_hint)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    isError = state.customMinutes.isNotBlank() && !state.customValid,
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -425,28 +337,28 @@ fun ModeEditorForm(
                     stringResource(R.string.modes_goal_title),
                     style = MaterialTheme.typography.titleMedium,
                 )
-                Text(
-                    stringResource(R.string.modes_goal_sub),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
                 Spacer(Modifier.height(Spacing.xs))
-                GoalPicker(
-                    hours = state.goalHours,
-                    minutes = state.goalMinutes,
-                    onHoursChange = { state.goalHours = it.coerceIn(0, 24) },
-                    onMinutesChange = { state.goalMinutes = it.coerceIn(0, 59) },
+                GoalPresetChips(
+                    selectedMinutes = state.goalMinutes,
+                    isCustom = state.goalIsCustom,
+                    onSelect = { state.goalMinutes = it },
+                    onCustom = { customGoalOpen = true },
                 )
+                if (customGoalOpen) {
+                    CustomGoalDialog(
+                        initialMinutes = state.goalMinutes,
+                        onDismiss = { customGoalOpen = false },
+                        onSave = {
+                            state.goalMinutes = it
+                            customGoalOpen = false
+                        },
+                    )
+                }
 
                 Spacer(Modifier.height(Spacing.md))
                 Text(
                     stringResource(R.string.modes_block_mode),
                     style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    stringResource(R.string.modes_block_mode_sub),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(Spacing.xs))
                 BlockModeSelector(selectedAllowlist = state.allowlistOnly, onSelect = { state.allowlistOnly = it })
@@ -509,14 +421,86 @@ fun ModeEditorForm(
                 }
 
                 Spacer(Modifier.height(Spacing.md))
+                AdvancedToggle(expanded = advancedOpen, onToggle = { advancedOpen = !advancedOpen })
+                if (advancedOpen) {
+                Spacer(Modifier.height(Spacing.sm))
+                Text(
+                    stringResource(R.string.modes_notif_title),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Spacer(Modifier.height(Spacing.xs))
+                NotificationModeSelector(
+                    selected = state.notificationMode,
+                    onSelect = { state.notificationMode = it },
+                )
+                Spacer(Modifier.height(Spacing.sm))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(MaterialTheme.shapes.small)
+                        .toggleable(
+                            value = state.strict,
+                            onValueChange = { state.strict = it },
+                            role = Role.Switch,
+                        )
+                        .padding(vertical = Spacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.tags_strict),
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                        Text(
+                            stringResource(R.string.tags_strict_sub),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(checked = state.strict, onCheckedChange = null)
+                }
+
+                Spacer(Modifier.height(Spacing.md))
+                Text(
+                    stringResource(R.string.modes_keep_awake),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Spacer(Modifier.height(Spacing.xs))
+                KeepAwakeSelector(selected = state.keepAwake, onSelect = { state.keepAwake = it })
+
+                Spacer(Modifier.height(Spacing.md))
+                Text(
+                    stringResource(R.string.modes_auto_end),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Spacer(Modifier.height(Spacing.xs))
+                AutoEndSelector(
+                    selected = state.autoEnd,
+                    onSelect = {
+                        state.autoEnd = it
+                        if (it == null || it in AUTO_PRESETS) state.customMinutes = ""
+                    },
+                )
+                Spacer(Modifier.height(Spacing.xs))
+                OutlinedTextField(
+                    value = state.customMinutes,
+                    onValueChange = { input ->
+                        state.customMinutes = input.filter { c -> c.isDigit() }.take(3)
+                        state.customMinutes.trim().toIntOrNull()?.takeIf { v -> v in 5..720 }?.let {
+                            state.autoEnd = it
+                        }
+                    },
+                    label = { Text(stringResource(R.string.modes_auto_custom_hint)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = state.customMinutes.isNotBlank() && !state.customValid,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(Modifier.height(Spacing.md))
                 Text(
                     stringResource(R.string.modes_launch_app),
                     style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    stringResource(R.string.modes_launch_sub),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(Spacing.xs))
                 OutlinedTextField(
@@ -572,6 +556,7 @@ fun ModeEditorForm(
                         }
                     }
                 }
+                } // advancedOpen
     }
 }
 
@@ -675,87 +660,252 @@ private fun AutoEndChip(
 }
 
 /**
- * Per-mode daily goal picker: hours 0–24 + minutes 0–59, 1-minute granularity.
- * Displays hour-only like "5h" unless minutes are set, then "5h 30m".
+ * Daily-goal presets (1h/2h/4h/6h) plus a Custom chip that opens the dialog.
+ * The custom chip shows the picked value when active.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun GoalPicker(
-    hours: Int,
-    minutes: Int,
-    onHoursChange: (Int) -> Unit,
-    onMinutesChange: (Int) -> Unit,
+private fun GoalPresetChips(
+    selectedMinutes: Int,
+    isCustom: Boolean,
+    onSelect: (Int) -> Unit,
+    onCustom: () -> Unit,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-        OutlinedTextField(
-            value = hours.toString(),
-            onValueChange = { input ->
-                input.filter { c -> c.isDigit() }.take(2).toIntOrNull()?.let {
-                    onHoursChange(it.coerceIn(0, 24))
-                } ?: run { if (input.isEmpty()) onHoursChange(0) }
+    val palette = LocalFocusPalette.current
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+        verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+    ) {
+        GOAL_PRESETS.forEach { mins ->
+            AutoEndChip(
+                label = formatGoalShort(mins),
+                isSelected = selectedMinutes == mins,
+                onClick = { onSelect(mins) },
+                paletteSelected = palette.accent,
+            )
+        }
+        AutoEndChip(
+            label = if (isCustom) {
+                stringResource(
+                    R.string.modes_goal_custom_x,
+                    formatGoalShort(selectedMinutes),
+                )
+            } else {
+                stringResource(R.string.modes_goal_custom)
             },
-            label = { Text(stringResource(R.string.modes_goal_hours)) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.weight(1f),
-        )
-        OutlinedTextField(
-            value = minutes.toString(),
-            onValueChange = { input ->
-                input.filter { c -> c.isDigit() }.take(2).toIntOrNull()?.let {
-                    onMinutesChange(it.coerceIn(0, 59))
-                } ?: run { if (input.isEmpty()) onMinutesChange(0) }
-            },
-            label = { Text(stringResource(R.string.modes_goal_minutes)) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.weight(1f),
+            isSelected = isCustom,
+            onClick = onCustom,
+            paletteSelected = palette.accent,
         )
     }
-    Spacer(Modifier.height(Spacing.xs))
-    Text(
-        stringResource(
-            R.string.modes_goal_preview_x,
-            formatGoalShort((hours * 60 + minutes).coerceIn(5, 1440)),
-        ),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+}
+
+/** Custom goal dialog: hours + minutes fields, 5 min – 24 h range. */
+@Composable
+private fun CustomGoalDialog(
+    initialMinutes: Int,
+    onDismiss: () -> Unit,
+    onSave: (Int) -> Unit,
+) {
+    var hours by remember(initialMinutes) {
+        mutableStateOf((initialMinutes / 60).toString())
+    }
+    var minutes by remember(initialMinutes) {
+        mutableStateOf((initialMinutes % 60).toString())
+    }
+    val total = ((hours.toIntOrNull() ?: -1) * 60) + (minutes.toIntOrNull() ?: -1)
+    val valid = total in 5..1440 &&
+        (hours.toIntOrNull() ?: -1) in 0..24 &&
+        (minutes.toIntOrNull() ?: -1) in 0..59
+
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.modes_goal_custom_title)) },
+        text = {
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                OutlinedTextField(
+                    value = hours,
+                    onValueChange = { hours = it.filter { c -> c.isDigit() }.take(2) },
+                    label = { Text(stringResource(R.string.modes_goal_hours_label)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = (hours.toIntOrNull() ?: -1) !in 0..24,
+                    modifier = Modifier.weight(1f),
+                )
+                OutlinedTextField(
+                    value = minutes,
+                    onValueChange = { minutes = it.filter { c -> c.isDigit() }.take(2) },
+                    label = { Text(stringResource(R.string.modes_goal_minutes_label)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = (minutes.toIntOrNull() ?: -1) !in 0..59,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(
+                onClick = { onSave(total) },
+                enabled = valid,
+            ) { Text(stringResource(R.string.common_save)) }
+        },
+        dismissButton = {
+            androidx.compose.material3.TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_cancel))
+            }
+        },
     )
+}
+
+/** Collapsed-by-default container for rarely-changed mode settings. */
+@Composable
+private fun AdvancedToggle(expanded: Boolean, onToggle: () -> Unit) {
+    val palette = LocalFocusPalette.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
+            .selectable(selected = expanded, onClick = onToggle, role = Role.Button)
+            .padding(vertical = Spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            stringResource(R.string.modes_advanced),
+            style = MaterialTheme.typography.titleMedium,
+            color = palette.textPrimary,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+            contentDescription = null,
+            tint = palette.textSecondary,
+        )
+    }
+}
+
+/** None / Silent / DND segmented control for session interruptions. */
+@Composable
+private fun NotificationModeSelector(
+    selected: com.flowtap.app.data.model.NotificationMode,
+    onSelect: (com.flowtap.app.data.model.NotificationMode) -> Unit,
+) {
+    val palette = LocalFocusPalette.current
+    val options = listOf(
+        Triple(
+            com.flowtap.app.data.model.NotificationMode.NONE,
+            stringResource(R.string.modes_notif_none),
+            stringResource(R.string.modes_notif_none_sub),
+        ),
+        Triple(
+            com.flowtap.app.data.model.NotificationMode.SILENT,
+            stringResource(R.string.modes_notif_silent),
+            stringResource(R.string.modes_notif_silent_sub),
+        ),
+        Triple(
+            com.flowtap.app.data.model.NotificationMode.DND,
+            stringResource(R.string.modes_notif_dnd),
+            stringResource(R.string.modes_notif_dnd_sub),
+        ),
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            options.forEach { (value, label, _) ->
+                val isSelected = selected == value
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = Dimens.presetMinHeight)
+                        .background(
+                            if (isSelected) palette.accent else palette.ringTrack,
+                            MaterialTheme.shapes.small,
+                        )
+                        .border(
+                            Dimens.cardBorderWidth,
+                            if (isSelected) palette.accent else palette.cardBorder,
+                            MaterialTheme.shapes.small,
+                        )
+                        .clip(MaterialTheme.shapes.small)
+                        .selectable(
+                            selected = isSelected,
+                            onClick = { onSelect(value) },
+                            role = Role.RadioButton,
+                        )
+                        .padding(vertical = Spacing.sm, horizontal = Spacing.xs),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                        else palette.textSecondary,
+                    )
+                }
+            }
+        }
+        Text(
+            options.first { it.first == selected }.third,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }
 
 @Composable
 private fun BlockModeSelector(selectedAllowlist: Boolean, onSelect: (Boolean) -> Unit) {
     val palette = LocalFocusPalette.current
-    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-        listOf(
-            false to stringResource(R.string.modes_blocklist),
-            true to stringResource(R.string.modes_allowlist),
-        ).forEach { (value, label) ->
-            val isSelected = selectedAllowlist == value
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .heightIn(min = Dimens.presetMinHeight)
-                    .background(
-                        if (isSelected) palette.accent else palette.ringTrack,
-                        MaterialTheme.shapes.small,
-                    )
-                    .border(
-                        Dimens.cardBorderWidth,
-                        if (isSelected) palette.accent else palette.cardBorder,
-                        MaterialTheme.shapes.small,
-                    )
-                    .clip(MaterialTheme.shapes.small)
-                    .selectable(selected = isSelected, onClick = { onSelect(value) }, role = Role.RadioButton)
-                    .padding(vertical = Spacing.md, horizontal = Spacing.sm),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else palette.textSecondary,
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(palette.ringTrack, MaterialTheme.shapes.small)
+                .border(
+                    Dimens.cardBorderWidth,
+                    palette.cardBorder,
+                    MaterialTheme.shapes.small,
                 )
+                .clip(MaterialTheme.shapes.small),
+        ) {
+            listOf(
+                false to stringResource(R.string.modes_blocklist),
+                true to stringResource(R.string.modes_allowlist),
+            ).forEach { (value, label) ->
+                val isSelected = selectedAllowlist == value
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(
+                            if (isSelected) palette.accent else androidx.compose.ui.graphics.Color.Transparent,
+                            MaterialTheme.shapes.small,
+                        )
+                        .clip(MaterialTheme.shapes.small)
+                        .selectable(
+                            selected = isSelected,
+                            onClick = { onSelect(value) },
+                            role = Role.RadioButton,
+                        )
+                        .padding(vertical = Spacing.sm, horizontal = Spacing.sm),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                        else palette.textSecondary,
+                    )
+                }
             }
         }
+        Spacer(Modifier.height(Spacing.xs))
+        Text(
+            text = if (selectedAllowlist) {
+                stringResource(R.string.modes_allowlist_sub)
+            } else {
+                stringResource(R.string.modes_blocklist_sub)
+            },
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

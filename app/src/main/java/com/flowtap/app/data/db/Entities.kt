@@ -2,6 +2,7 @@ package com.flowtap.app.data.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.flowtap.app.data.model.NotificationMode
 
 /**
  * A focus mode profile (e.g. Deep Work, Reading, Workout).
@@ -9,6 +10,7 @@ import androidx.room.PrimaryKey
  * v2 adds: keepAwake (nullable override), autoEndMinutes (nullable),
  * allowlistOnly + allowedAppsJson, launchPackage.
  * v3 adds: dailyGoalMinutes (per-mode daily goal, default 300).
+ * v4 replaces dndEnabled with notificationMode (none/silent/dnd, default silent).
  */
 @Entity(tableName = "modes")
 data class ModeEntity(
@@ -16,7 +18,7 @@ data class ModeEntity(
     val name: String,
     val iconName: String,
     val accentIndex: Int,
-    val dndEnabled: Boolean,
+    val notificationMode: String = NotificationMode.SILENT.key,
     val strictMode: Boolean,
     val blockedAppsJson: String,
     val keepAwake: Boolean? = null,
@@ -24,7 +26,7 @@ data class ModeEntity(
     val allowlistOnly: Boolean = false,
     val allowedAppsJson: String = "[]",
     val launchPackage: String? = null,
-    val dailyGoalMinutes: Int = 300,
+    val dailyGoalMinutes: Int = 120,
     val createdAt: Long,
 )
 

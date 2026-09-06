@@ -41,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -50,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.flowtap.app.R
 import com.flowtap.app.data.model.SessionRecord
+import com.flowtap.app.data.repo.WeekStats
 import com.flowtap.app.di.AppContainer
 import com.flowtap.app.ui.components.AdaptiveTimerText
 import com.flowtap.app.ui.components.EmptyState
@@ -68,7 +70,9 @@ fun HistoryScreen(container: AppContainer) {
     val palette = LocalFocusPalette.current
 
     val week by vm.week.collectAsStateWithLifecycle()
-    val weeklyGoal by vm.weeklyGoalMs.collectAsStateWithLifecycle()
+    val modes by vm.modes.collectAsStateWithLifecycle()
+    val modeWeeks by vm.modeWeeks.collectAsStateWithLifecycle()
+    val combinedDaily by vm.combinedDailyMs.collectAsStateWithLifecycle()
     val streak by vm.streakDays.collectAsStateWithLifecycle()
     val longest by vm.longestMs.collectAsStateWithLifecycle()
     val average by vm.averageDailyMs.collectAsStateWithLifecycle()
@@ -77,8 +81,8 @@ fun HistoryScreen(container: AppContainer) {
 
     var selectedSession by remember { mutableStateOf<SessionRecord?>(null) }
 
-    // Weekly goal is a 7-day total; chart bars are daily, so use daily slice.
-    val dailyGoalMs = if (weeklyGoal > 0) weeklyGoal / 7 else 0L
+    // Daily bars compare against the combined per-mode daily goals.
+    val dailyGoalMs = combinedDaily
     val sidePadding = rememberAdaptiveSidePadding()
 
     // MainNav's Scaffold already applies the status-bar inset; only the
@@ -112,7 +116,7 @@ fun HistoryScreen(container: AppContainer) {
             }
 
             item {
-                WeekCard(total = week.totalMs, goal = weeklyGoal)
+                ModeWeekCard(modes = modes, modeWeeks = modeWeeks)
                 Spacer(Modifier.height(Spacing.cardGap))
                 StatTrio(streak = streak, longest = longest, average = average)
                 Spacer(Modifier.height(Spacing.sectionGap))
@@ -210,45 +214,72 @@ fun HistoryScreen(container: AppContainer) {
     }
 }
 
+/**
+ * This week's focus, one row per mode against its own 7× daily target —
+ * a single summed goal is meaningless once modes have individual goals.
+ */
 @Composable
-private fun WeekCard(total: Long, goal: Long) {
+private fun ModeWeekCard(
+    modes: List<com.flowtap.app.data.model.FocusMode>,
+    modeWeeks: Map<Long, WeekStats>,
+) {
     val palette = LocalFocusPalette.current
-    val progress = if (goal > 0) total.toFloat() / goal else 0f
     FocusCard(modifier = Modifier.fillMaxWidth()) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Spacing.cardPaddingLarge),
-            contentAlignment = Alignment.Center,
+                .padding(Spacing.cardPadding),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
-            GoalRing(progress = progress, size = Dimens.heroRingHistory, strokeWidth = 12.dp) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    AnimatedContent(
-                        targetState = TimeUtil.formatHoursMinutes(total),
-                        transitionSpec = { fadeIn() togetherWith fadeOut() },
-                        label = "weekTotal",
-                    ) { value ->
-                        AdaptiveTimerText(
-                            text = value,
-                            color = palette.textPrimary,
-                            baseFontSize = MaterialTheme.typography.displayMedium.fontSize,
-                            maxWidthFraction = 0.52f,
+            Text(
+                stringResource(R.string.history_this_week_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = palette.textPrimary,
+            )
+            if (modes.isEmpty()) {
+                Text(
+                    stringResource(R.string.history_chart_empty_hint),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = palette.textTertiary,
+                )
+            } else {
+                modes.forEach { mode ->
+                    val total = modeWeeks[mode.id]?.totalMs ?: 0L
+                    val target = mode.dailyGoalMinutes * 7 * 60_000L
+                    val progress = if (target > 0) total.toFloat() / target else 0f
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                mode.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = palette.textPrimary,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Text(
+                                stringResource(
+                                    R.string.history_mode_week_x,
+                                    TimeUtil.formatHoursMinutes(total),
+                                    TimeUtil.formatGoal(mode.dailyGoalMinutes * 7L),
+                                ),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = palette.accentText,
+                            )
+                        }
+                        androidx.compose.material3.LinearProgressIndicator(
+                            progress = { progress.coerceIn(0f, 1f) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(MaterialTheme.shapes.small),
+                            color = palette.accent,
+                            trackColor = palette.ringTrack,
                         )
                     }
-                    Spacer(Modifier.height(Spacing.xs))
-                    Text(
-                        stringResource(R.string.history_total),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = palette.textSecondary,
-                    )
-                    Text(
-                        stringResource(
-                            R.string.common_goal_x,
-                            TimeUtil.formatGoal(goal / 60_000),
-                        ),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = palette.accentText,
-                    )
                 }
             }
         }

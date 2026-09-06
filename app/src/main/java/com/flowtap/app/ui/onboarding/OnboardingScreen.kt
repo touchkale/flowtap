@@ -594,29 +594,29 @@ private fun MethodRow(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                if (selected) palette.accent else palette.card,
-                MaterialTheme.shapes.medium,
+                if (selected) palette.accent else palette.ringTrack,
+                MaterialTheme.shapes.small,
             )
             .border(
                 Dimens.cardBorderWidth,
                 if (selected) palette.accent else palette.cardBorder,
-                MaterialTheme.shapes.medium,
+                MaterialTheme.shapes.small,
             )
-            .clip(MaterialTheme.shapes.medium)
+            .clip(MaterialTheme.shapes.small)
             .clickable(onClick = onClick, role = Role.Button)
-            .padding(Spacing.cardPadding),
+            .padding(horizontal = Spacing.md, vertical = Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 color = if (selected) MaterialTheme.colorScheme.onPrimary
                 else palette.textPrimary,
             )
             Text(
                 subtitle,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.labelMedium,
                 color = if (selected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
                 else palette.textSecondary,
             )

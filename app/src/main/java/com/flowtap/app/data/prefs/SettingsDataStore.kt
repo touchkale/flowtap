@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.flowtap.app.data.model.ActiveSessionSnapshot
+import com.flowtap.app.data.model.NotificationMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.json.JSONObject
@@ -52,6 +53,8 @@ class SettingsDataStore(private val context: Context) {
         val ACTIVE_SESSION_JSON = stringPreferencesKey("active_session_json")
         val PRIOR_DND_FILTER = intPreferencesKey("prior_dnd_filter")
         val PENDING_DND_RESTORE = booleanPreferencesKey("pending_dnd_restore")
+        val PRIOR_RINGER_MODE = intPreferencesKey("prior_ringer_mode")
+        val PENDING_RINGER_RESTORE = booleanPreferencesKey("pending_ringer_restore")
     }
 
     val dailyGoalMinutes: Flow<Int> = context.settingsDataStore.data
@@ -90,6 +93,12 @@ class SettingsDataStore(private val context: Context) {
 
     val priorDndFilter: Flow<Int?> = context.settingsDataStore.data
         .map { it[Keys.PRIOR_DND_FILTER] }
+
+    val pendingRingerRestore: Flow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.PENDING_RINGER_RESTORE] ?: false }
+
+    val priorRingerMode: Flow<Int?> = context.settingsDataStore.data
+        .map { it[Keys.PRIOR_RINGER_MODE] }
 
     suspend fun setDailyGoal(minutes: Int) {
         context.settingsDataStore.edit { it[Keys.DAILY_GOAL_MIN] = minutes }
@@ -143,6 +152,18 @@ class SettingsDataStore(private val context: Context) {
         context.settingsDataStore.edit { it[Keys.PENDING_DND_RESTORE] = pending }
     }
 
+    suspend fun savePriorRingerMode(mode: Int) {
+        context.settingsDataStore.edit { it[Keys.PRIOR_RINGER_MODE] = mode }
+    }
+
+    suspend fun clearPriorRingerMode() {
+        context.settingsDataStore.edit { it.remove(Keys.PRIOR_RINGER_MODE) }
+    }
+
+    suspend fun setPendingRingerRestore(pending: Boolean) {
+        context.settingsDataStore.edit { it[Keys.PENDING_RINGER_RESTORE] = pending }
+    }
+
     private fun encodeSession(s: ActiveSessionSnapshot): String = JSONObject().apply {
         put("sessionId", s.sessionId)
         put("modeId", s.modeId)
@@ -152,7 +173,7 @@ class SettingsDataStore(private val context: Context) {
         put("iconName", s.iconName)
         put("accentIndex", s.accentIndex)
         put("strictMode", s.strictMode)
-        put("dndEnabled", s.dndEnabled)
+        put("notificationMode", s.notificationMode.key)
         put("blockedApps", s.blockedApps.joinToString(","))
         put("startedAtEpoch", s.startedAtEpoch)
         if (s.keepAwake == null) put("keepAwake", JSONObject.NULL) else put("keepAwake", s.keepAwake)
@@ -176,7 +197,12 @@ class SettingsDataStore(private val context: Context) {
             iconName = o.optString("iconName", "work"),
             accentIndex = o.optInt("accentIndex", 0),
             strictMode = o.optBoolean("strictMode", false),
-            dndEnabled = o.optBoolean("dndEnabled", true),
+            notificationMode = if (o.isNull("notificationMode")) {
+                // Pre-v4 snapshots stored a dndEnabled boolean.
+                NotificationMode.legacy(o.optBoolean("dndEnabled", false))
+            } else {
+                NotificationMode.fromKey(o.optString("notificationMode"))
+            },
             blockedApps = blocked,
             keepAwake = if (o.isNull("keepAwake")) null else o.optBoolean("keepAwake"),
             autoEndMinutes = if (o.isNull("autoEndMinutes")) null else o.optInt("autoEndMinutes").takeIf { it > 0 },
@@ -187,7 +213,7 @@ class SettingsDataStore(private val context: Context) {
     }.getOrNull()
 
     companion object {
-        const val DEFAULT_DAILY_GOAL_MIN = 300
+        const val DEFAULT_DAILY_GOAL_MIN = 120
         const val DEFAULT_WEEKLY_GOAL_MIN = 2100
     }
 }

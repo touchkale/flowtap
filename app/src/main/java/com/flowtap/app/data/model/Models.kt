@@ -14,12 +14,28 @@ enum class EndReason(val value: String) {
     }
 }
 
+/** What the phone does with interruptions while a session of this mode runs. */
+enum class NotificationMode(val key: String) {
+    NONE("none"),
+    SILENT("silent"),
+    DND("dnd"),
+    ;
+
+    companion object {
+        fun fromKey(key: String?): NotificationMode =
+            entries.firstOrNull { it.key == key } ?: SILENT
+
+        fun legacy(dndEnabled: Boolean): NotificationMode =
+            if (dndEnabled) DND else SILENT
+    }
+}
+
 data class FocusMode(
     val id: Long = 0,
     val name: String,
     val iconName: String,
     val accentIndex: Int = 0,
-    val dndEnabled: Boolean = true,
+    val notificationMode: NotificationMode = NotificationMode.SILENT,
     val strictMode: Boolean = false,
     val blockedApps: List<String> = emptyList(),
     /** Null = follow global keep-awake setting; true/false overrides it for this mode. */
@@ -31,8 +47,8 @@ data class FocusMode(
     val allowedApps: List<String> = emptyList(),
     /** Package launched automatically when a session of this mode starts; null = none. */
     val launchPackage: String? = null,
-    /** Per-mode daily goal in minutes; default 300 (5h). Custom hours+minutes in editor. */
-    val dailyGoalMinutes: Int = 300,
+    /** Per-mode daily goal in minutes; default 120 (2h). Custom hours+minutes in editor. */
+    val dailyGoalMinutes: Int = 120,
     val createdAt: Long = System.currentTimeMillis(),
 )
 

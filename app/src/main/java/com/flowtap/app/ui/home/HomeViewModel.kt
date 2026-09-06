@@ -83,27 +83,40 @@ class HomeViewModel(
     }
 
     /**
-     * Home DND quick toggle. Flips the mode's stored DND flag (that session's
-     * mode when running, else the default mode) and live-applies it to a
-     * running session. The UI should open system DND settings when the result
-     * is [DndToggleResult.ENABLED_WITHOUT_PERMISSION].
+     * Home notification quick toggle. Cycles the mode's behavior
+     * None → Silent → DND (that session's mode when running, else the
+     * selected mode) and live-applies it to a running session. The UI should
+     * open system DND settings when the result is DND without permission.
      */
-    fun toggleModeDnd(onResult: (DndToggleResult) -> Unit) {
+    fun cycleNotificationMode(onResult: (CycleResult) -> Unit) {
         viewModelScope.launch {
             val targetId = SessionManager.current?.modeId
                 ?: selectedMode.value?.id
                 ?: modes.value.firstOrNull()?.id
             val mode = targetId?.let { repo.getMode(it) }
             if (mode == null) {
-                onResult(DndToggleResult.NO_MODE)
+                onResult(CycleResult.NO_MODE)
                 return@launch
             }
-            val next = !mode.dndEnabled
-            repo.updateMode(mode.copy(dndEnabled = next))
-            if (SessionManager.current?.modeId == mode.id) {
-                SessionManager.setSessionDnd(next)
+            val next = when (mode.notificationMode) {
+                com.flowtap.app.data.model.NotificationMode.NONE ->
+                    com.flowtap.app.data.model.NotificationMode.SILENT
+                com.flowtap.app.data.model.NotificationMode.SILENT ->
+                    com.flowtap.app.data.model.NotificationMode.DND
+                com.flowtap.app.data.model.NotificationMode.DND ->
+                    com.flowtap.app.data.model.NotificationMode.NONE
             }
-            onResult(if (next) DndToggleResult.ENABLED else DndToggleResult.DISABLED)
+            repo.updateMode(mode.copy(notificationMode = next))
+            if (SessionManager.current?.modeId == mode.id) {
+                SessionManager.setSessionNotificationMode(next)
+            }
+            onResult(
+                when (next) {
+                    com.flowtap.app.data.model.NotificationMode.DND -> CycleResult.DND
+                    com.flowtap.app.data.model.NotificationMode.SILENT -> CycleResult.SILENT
+                    com.flowtap.app.data.model.NotificationMode.NONE -> CycleResult.NONE
+                }
+            )
         }
     }
 
@@ -116,7 +129,7 @@ class HomeViewModel(
         SessionManager.endSession(EndReason.EMERGENCY)
     }
 
-    enum class DndToggleResult { ENABLED, DISABLED, NO_MODE }
+    enum class CycleResult { DND, SILENT, NONE, NO_MODE }
 
     companion object {
         fun factory(container: AppContainer) = vmFactory {

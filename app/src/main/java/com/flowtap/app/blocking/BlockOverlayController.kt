@@ -207,10 +207,10 @@ class BlockOverlayController(private val service: AccessibilityService) {
         fun px(dpv: Float) = (dpv * dp).toInt()
 
         val dark = isDark
-        val bg = if (dark) 0xFF0A1411.toInt() else 0xFFEBF4F1.toInt()
-        val primary = if (dark) 0xFFE4F2EE.toInt() else 0xFF0A1B16.toInt()
-        val secondary = if (dark) 0xFF8FA8A1.toInt() else 0xFF47645C.toInt()
-        val accent = if (dark) 0xFF2DBDA4.toInt() else 0xFF0B8F7A.toInt()
+        val bg = if (dark) 0xFF0A1410.toInt() else 0xFFEDF5EF.toInt()
+        val primary = if (dark) 0xFFF0F7F3.toInt() else 0xFF0A1A14.toInt()
+        val secondary = if (dark) 0xFFA6BFB4.toInt() else 0xFF3F5A4E.toInt()
+        val accent = if (dark) 0xFF34D399.toInt() else 0xFF047857.toInt()
         val danger = if (dark) 0xFFE05B5B.toInt() else 0xFFC24848.toInt()
         val onAccent = 0xFFFFFFFF.toInt()
 

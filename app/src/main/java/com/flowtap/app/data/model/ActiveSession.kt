@@ -13,7 +13,7 @@ data class ActiveSessionSnapshot(
     val iconName: String,
     val accentIndex: Int = 0,
     val strictMode: Boolean = false,
-    val dndEnabled: Boolean = true,
+    val notificationMode: NotificationMode = NotificationMode.SILENT,
     val blockedApps: List<String> = emptyList(),
     /** Nullable keep-awake override captured from the mode; null = follow global. */
     val keepAwake: Boolean? = null,

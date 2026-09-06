@@ -118,8 +118,8 @@ fun HomeScreen(
     }
 
     fun onToggleDnd() {
-        vm.toggleModeDnd { result ->
-            if (result == HomeViewModel.DndToggleResult.ENABLED &&
+        vm.cycleNotificationMode { result ->
+            if (result == HomeViewModel.CycleResult.DND &&
                 !Permissions.isDndGranted(context)
             ) {
                 Permissions.enableDnd(context)
@@ -262,6 +262,13 @@ private fun IdleView(
     val percent = (progress * 100).toInt().coerceIn(0, 100)
     val remainingMs = (dailyGoal - todayTotal).coerceAtLeast(0L)
 
+    ModeSelectorRow(
+        modes = modes,
+        selected = selectedMode,
+        onSelect = onSelectMode,
+    )
+    Spacer(Modifier.height(Spacing.rowGap))
+
     FocusCard(
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -290,6 +297,7 @@ private fun IdleView(
                     } else {
                         stringResource(R.string.home_percent_of_goal, percent)
                     },
+                    compact = true,
                 )
             }
             Spacer(Modifier.height(Spacing.md))
@@ -318,15 +326,15 @@ private fun IdleView(
                             )
                         }
                         Spacer(Modifier.height(Spacing.xs))
-                        ModeDropdown(
-                            modes = modes,
-                            selected = selectedMode,
-                            onSelect = onSelectMode,
-                        )
                         Text(
-                            stringResource(R.string.common_goal_x, TimeUtil.formatGoal(dailyGoal / 60_000)),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = palette.accentText,
+                            selectedMode?.name
+                                ?: stringResource(R.string.home_deep_work_fallback),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = palette.textSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.fillMaxWidth(0.6f),
+                            textAlign = TextAlign.Center,
                         )
                     }
                 }
@@ -336,10 +344,18 @@ private fun IdleView(
                 text = if (percent >= 100) {
                     stringResource(R.string.home_goal_complete)
                 } else {
-                    stringResource(R.string.home_remaining_x, TimeUtil.formatHoursMinutes(remainingMs))
+                    stringResource(
+                        R.string.home_goal_remaining_x,
+                        TimeUtil.formatGoal(dailyGoal / 60_000),
+                        if (remainingMs % 3_600_000L == 0L) {
+                            TimeUtil.formatGoal(remainingMs / 60_000)
+                        } else {
+                            TimeUtil.formatHoursMinutes(remainingMs)
+                        },
+                    )
                 },
                 style = MaterialTheme.typography.labelLarge,
-                color = palette.textTertiary,
+                color = palette.accentText,
                 textAlign = TextAlign.Center,
             )
         }
@@ -360,18 +376,16 @@ private fun IdleView(
         Spacer(Modifier.size(Spacing.sm))
         Text(stringResource(R.string.home_start), style = MaterialTheme.typography.titleMedium)
     }
-    Spacer(Modifier.height(Spacing.sm))
-    Text(
-        text = if (softStartMode == null) {
-            stringResource(R.string.home_strict_only_hint)
-        } else {
-            stringResource(R.string.home_soft_hint)
-        },
-        style = MaterialTheme.typography.labelLarge,
-        color = palette.textTertiary,
-        modifier = Modifier.fillMaxWidth(),
-        textAlign = TextAlign.Center,
-    )
+    if (softStartMode == null) {
+        Spacer(Modifier.height(Spacing.sm))
+        Text(
+            text = stringResource(R.string.home_strict_only_hint),
+            style = MaterialTheme.typography.labelLarge,
+            color = palette.textTertiary,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
+    }
 
     Spacer(Modifier.height(Spacing.lg))
 
@@ -388,6 +402,7 @@ private fun IdleView(
                 stringResource(R.string.home_strict_off)
             },
             icon = Icons.Outlined.Lock,
+            compact = true,
         )
         if (mode?.allowlistOnly == true) {
             StatusChip(
@@ -396,37 +411,47 @@ private fun IdleView(
                     mode.allowedApps.size,
                 ),
                 icon = Icons.Outlined.Checklist,
+                compact = true,
             )
         } else {
             val blockedCount = mode?.blockedApps?.size ?: 0
             StatusChip(
                 text = pluralStringResource(R.plurals.plural_apps_blocked, blockedCount, blockedCount),
                 icon = Icons.Outlined.Block,
+                compact = true,
             )
         }
         mode?.autoEndMinutes?.let {
             StatusChip(
                 text = stringResource(R.string.modes_chip_auto_x, formatAutoEndShort(it)),
                 icon = Icons.Outlined.Timer,
+                compact = true,
             )
         }
         if (mode?.keepAwake == true) {
-            StatusChip(text = stringResource(R.string.modes_chip_awake))
+            StatusChip(
+                text = stringResource(R.string.modes_chip_awake),
+                compact = true,
+            )
         }
         Box(
             modifier = Modifier.toggleable(
-                value = mode?.dndEnabled == true,
+                value = mode?.notificationMode ==
+                    com.flowtap.app.data.model.NotificationMode.DND,
                 role = Role.Switch,
                 onValueChange = { onToggleDnd() },
             ),
         ) {
             StatusChip(
-                text = if (mode?.dndEnabled == true) {
-                    stringResource(R.string.home_dnd_on)
-                } else {
-                    stringResource(R.string.home_dnd_off)
+                text = when (mode?.notificationMode) {
+                    com.flowtap.app.data.model.NotificationMode.DND ->
+                        stringResource(R.string.home_dnd_on)
+                    com.flowtap.app.data.model.NotificationMode.SILENT ->
+                        stringResource(R.string.home_silent)
+                    else -> stringResource(R.string.home_notif_off)
                 },
                 icon = Icons.Outlined.NotificationsOff,
+                compact = true,
             )
         }
     }
@@ -566,6 +591,7 @@ private fun ActiveSessionView(
                 else -> stringResource(R.string.home_strict_off)
             },
             icon = Icons.Outlined.Lock,
+            compact = true,
         )
         if (snap.allowlistOnly) {
             StatusChip(
@@ -574,6 +600,7 @@ private fun ActiveSessionView(
                     snap.allowedApps.size,
                 ),
                 icon = Icons.Outlined.Checklist,
+                compact = true,
             )
         } else {
             StatusChip(
@@ -583,31 +610,41 @@ private fun ActiveSessionView(
                     snap.blockedApps.size,
                 ),
                 icon = Icons.Outlined.Block,
+                compact = true,
             )
         }
         snap.autoEndMinutes?.let {
             StatusChip(
                 text = stringResource(R.string.modes_chip_auto_x, formatAutoEndShort(it)),
                 icon = Icons.Outlined.Timer,
+                compact = true,
             )
         }
         if (snap.keepAwake == true) {
-            StatusChip(text = stringResource(R.string.modes_chip_awake))
+            StatusChip(
+                text = stringResource(R.string.modes_chip_awake),
+                compact = true,
+            )
         }
         Box(
             modifier = Modifier.toggleable(
-                value = snap.dndEnabled,
+                value = snap.notificationMode ==
+                    com.flowtap.app.data.model.NotificationMode.DND,
                 role = Role.Switch,
                 onValueChange = { onToggleDnd() },
             ),
         ) {
             StatusChip(
-                text = if (snap.dndEnabled) {
-                    stringResource(R.string.home_dnd_on)
-                } else {
-                    stringResource(R.string.home_dnd_off)
+                text = when (snap.notificationMode) {
+                    com.flowtap.app.data.model.NotificationMode.DND ->
+                        stringResource(R.string.home_dnd_on)
+                    com.flowtap.app.data.model.NotificationMode.SILENT ->
+                        stringResource(R.string.home_silent)
+                    com.flowtap.app.data.model.NotificationMode.NONE ->
+                        stringResource(R.string.home_notif_off)
                 },
                 icon = Icons.Outlined.NotificationsOff,
+                compact = true,
             )
         }
     }
@@ -693,27 +730,42 @@ private fun ActiveSessionView(
     }
 }
 
+/**
+ * Mode selector row above the focus card: current mode + chevron, menu lists
+ * all modes. Sits outside the ring so the menu can never cover timer content.
+ */
 @Composable
-private fun ModeDropdown(
+private fun ModeSelectorRow(
     modes: List<FocusMode>,
     selected: FocusMode?,
     onSelect: (Long) -> Unit,
 ) {
     val palette = LocalFocusPalette.current
     var expanded by remember { mutableStateOf(false) }
-    Box {
-        TextButton(
-            onClick = { if (modes.size > 1) expanded = true },
-            enabled = modes.size > 1,
-        ) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(palette.card, MaterialTheme.shapes.medium)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(enabled = modes.size > 1) { expanded = true }
+            .padding(horizontal = Spacing.cardPadding, vertical = Spacing.md),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                Icons.Outlined.Nfc,
+                contentDescription = null,
+                tint = palette.accentText,
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.size(Spacing.md))
             Text(
                 selected?.name ?: stringResource(R.string.home_select_mode),
                 style = MaterialTheme.typography.titleMedium,
-                color = palette.textSecondary,
+                color = palette.textPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.width(160.dp),
-                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f),
             )
             if (modes.size > 1) {
                 Icon(

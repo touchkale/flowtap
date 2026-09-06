@@ -127,12 +127,6 @@ fun SettingsScreen(container: AppContainer) {
                 style = MaterialTheme.typography.headlineMedium,
                 color = palette.textPrimary,
             )
-            Spacer(Modifier.height(Spacing.xs))
-            Text(
-                stringResource(R.string.settings_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = palette.textSecondary,
-            )
             Spacer(Modifier.height(Spacing.sectionGap))
 
             if (locked) {
@@ -545,19 +539,18 @@ private fun BlockingMethodRow(
             )
             .clip(MaterialTheme.shapes.small)
             .clickable(enabled = enabled, role = Role.RadioButton, onClick = onClick)
-            .padding(Spacing.cardPadding),
+            .padding(horizontal = Spacing.md, vertical = Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 color = if (selected) MaterialTheme.colorScheme.onPrimary else palette.textPrimary,
             )
-            Spacer(Modifier.height(Spacing.xxs))
             Text(
                 subtitle,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.labelMedium,
                 color = if (selected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
                 else palette.textSecondary,
             )

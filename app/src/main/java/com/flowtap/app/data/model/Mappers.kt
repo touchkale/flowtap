@@ -10,7 +10,7 @@ fun ModeEntity.toDomain(): FocusMode = FocusMode(
     name = name,
     iconName = iconName,
     accentIndex = accentIndex,
-    dndEnabled = dndEnabled,
+    notificationMode = NotificationMode.fromKey(notificationMode),
     strictMode = strictMode,
     blockedApps = Json.decodeStringList(blockedAppsJson),
     keepAwake = keepAwake,
@@ -18,7 +18,7 @@ fun ModeEntity.toDomain(): FocusMode = FocusMode(
     allowlistOnly = allowlistOnly,
     allowedApps = runCatching { Json.decodeStringList(allowedAppsJson) }.getOrDefault(emptyList()),
     launchPackage = launchPackage?.takeIf { it.isNotBlank() },
-    dailyGoalMinutes = dailyGoalMinutes.takeIf { it > 0 } ?: 300,
+    dailyGoalMinutes = dailyGoalMinutes.takeIf { it > 0 } ?: 120,
     createdAt = createdAt,
 )
 
@@ -27,7 +27,7 @@ fun FocusMode.toEntity(): ModeEntity = ModeEntity(
     name = name,
     iconName = iconName,
     accentIndex = accentIndex,
-    dndEnabled = dndEnabled,
+    notificationMode = notificationMode.key,
     strictMode = strictMode,
     blockedAppsJson = Json.encodeStringList(blockedApps),
     keepAwake = keepAwake,
@@ -35,7 +35,7 @@ fun FocusMode.toEntity(): ModeEntity = ModeEntity(
     allowlistOnly = allowlistOnly,
     allowedAppsJson = Json.encodeStringList(allowedApps),
     launchPackage = launchPackage?.takeIf { it.isNotBlank() },
-    dailyGoalMinutes = dailyGoalMinutes.coerceIn(1, 1440),
+    dailyGoalMinutes = dailyGoalMinutes.coerceIn(5, 1440),
     createdAt = createdAt,
 )
 

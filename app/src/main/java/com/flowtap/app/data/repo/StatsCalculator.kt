@@ -17,6 +17,12 @@ object StatsCalculator {
 
     const val MIN_STREAK_DAY_MS = 60_000L
 
+    /**
+     * Sessions shorter than this are accidental taps: hidden from recents,
+     * history and totals (kept in the DB, streak rule unchanged).
+     */
+    const val MIN_COUNTABLE_MS = 5 * 60_000L
+
     fun computeWeek(list: List<SessionRecord>, now: Long = System.currentTimeMillis()): WeekStats {
         val weekStart = TimeUtil.startOfWeek(now)
         val days = (0..6).map { i ->
@@ -24,6 +30,7 @@ object StatsCalculator {
             val dayEnd = TimeUtil.addDays(dayStart, 1)
             val total = list
                 .filter { it.startedAt >= dayStart && it.startedAt < dayEnd }
+                .filter { it.endedAt > 0 && it.durationMs >= MIN_COUNTABLE_MS }
                 .sumOf { it.durationMs }
             DayTotal(dayStart = dayStart, totalMs = total)
         }
@@ -35,16 +42,20 @@ object StatsCalculator {
         now: Long = System.currentTimeMillis(),
     ): Long {
         val todayStart = TimeUtil.localDayStart(now)
-        return list.filter { it.endedAt > 0 && it.startedAt >= todayStart }.sumOf { it.durationMs }
+        return list.filter {
+            it.endedAt > 0 && it.durationMs >= MIN_COUNTABLE_MS && it.startedAt >= todayStart
+        }.sumOf { it.durationMs }
     }
 
-    /** Per-mode today totals (completed sessions only), for the Home dropdown. */
+    /** Per-mode today totals (countable sessions only), for the Home selector. */
     fun computeTodayTotalByMode(
         list: List<SessionRecord>,
         now: Long = System.currentTimeMillis(),
     ): Map<Long, Long> {
         val todayStart = TimeUtil.localDayStart(now)
-        return list.filter { it.endedAt > 0 && it.startedAt >= todayStart }
+        return list.filter {
+            it.endedAt > 0 && it.durationMs >= MIN_COUNTABLE_MS && it.startedAt >= todayStart
+        }
             .groupBy { it.modeId }
             .mapValues { (_, sessions) -> sessions.sumOf { it.durationMs } }
     }
@@ -70,7 +81,9 @@ object StatsCalculator {
         now: Long = System.currentTimeMillis(),
     ): Long {
         val start = TimeUtil.addDays(TimeUtil.localDayStart(now), -6)
-        val total = list.filter { it.startedAt >= start }.sumOf { it.durationMs }
+        val total = list.filter {
+            it.startedAt >= start && it.endedAt > 0 && it.durationMs >= MIN_COUNTABLE_MS
+        }.sumOf { it.durationMs }
         return total / 7
     }
 }

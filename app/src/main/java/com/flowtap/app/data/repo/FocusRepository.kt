@@ -28,7 +28,7 @@ class FocusRepository(
                 name = "Deep Work",
                 iconName = "work",
                 accentIndex = 0,
-                dndEnabled = true,
+                notificationMode = com.flowtap.app.data.model.NotificationMode.SILENT,
                 strictMode = false,
                 blockedApps = listOf(
                     "com.instagram.android",
@@ -36,6 +36,7 @@ class FocusRepository(
                     "com.reddit.frontpage",
                     "com.android.chrome",
                 ),
+                dailyGoalMinutes = 120,
             ).toEntity()
         )
     }

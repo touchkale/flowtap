@@ -7,6 +7,7 @@ import com.flowtap.app.data.model.ActiveSessionSnapshot
 import com.flowtap.app.data.model.EndReason
 import com.flowtap.app.data.model.FocusMode
 import com.flowtap.app.data.model.FocusTag
+import com.flowtap.app.data.model.NotificationMode
 import com.flowtap.app.data.model.SessionRecord
 import com.flowtap.app.data.prefs.SettingsDataStore
 import com.flowtap.app.data.repo.FocusRepository
@@ -42,6 +43,7 @@ object SessionManager {
     private lateinit var repo: FocusRepository
     private lateinit var prefs: SettingsDataStore
     private lateinit var dnd: DndController
+    private lateinit var ringer: RingerController
     private var scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val _active = MutableStateFlow<ActiveSessionSnapshot?>(null)
@@ -70,6 +72,7 @@ object SessionManager {
         repo = container.focusRepository
         prefs = container.settingsDataStore
         dnd = DndController(app, prefs)
+        ringer = RingerController(app, prefs)
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         scope.launch { ensureLoaded() }
     }
@@ -151,44 +154,62 @@ object SessionManager {
     }
 
     /**
-     * Live-applies a DND preference change to the running session (Home quick
-     * toggle). Updates the persisted snapshot too so process death mid-session
-     * keeps the new value. No-ops when nothing is running or already matching.
+     * Live-applies a notification-mode change to the running session (Home
+     * quick toggle cycles None/Silent/DND). Tears down the old behavior and
+     * applies the new one, and persists the snapshot so process death
+     * mid-session keeps the new value.
      */
-    fun setSessionDnd(enabled: Boolean) {
+    fun setSessionNotificationMode(mode: NotificationMode) {
         scope.launch {
             mutex.withLock {
                 loadPersistedLocked()
                 val cur = _active.value ?: return@withLock
-                if (cur.dndEnabled == enabled) return@withLock
-                if (enabled) {
-                    if (!dnd.isPolicyAccessGranted()) return@withLock
-                    if (!prefs.dndMasterEnabled.first()) return@withLock
-                    dnd.enableDnd()
-                } else {
-                    dnd.restoreDnd()
-                }
-                val updated = cur.copy(dndEnabled = enabled)
+                if (cur.notificationMode == mode) return@withLock
+                teardownNotification(cur.notificationMode)
+                applyNotification(mode)
+                val updated = cur.copy(notificationMode = mode)
                 _active.value = updated
                 prefs.saveActiveSession(updated)
             }
         }
     }
 
+    /** Applies [mode] fresh (no teardown): DND needs master + policy access. */
+    private suspend fun applyNotification(mode: NotificationMode) {
+        when (mode) {
+            NotificationMode.DND -> {
+                if (!dnd.isPolicyAccessGranted()) return
+                if (!prefs.dndMasterEnabled.first()) return
+                dnd.enableDnd()
+            }
+            NotificationMode.SILENT -> ringer.silence()
+            NotificationMode.NONE -> Unit
+        }
+    }
+
+    private suspend fun teardownNotification(mode: NotificationMode) {
+        when (mode) {
+            NotificationMode.DND -> dnd.restoreDnd()
+            NotificationMode.SILENT -> ringer.restore()
+            NotificationMode.NONE -> Unit
+        }
+    }
+
     /**
      * Applies a universal-master change to the running session, if any:
      * turning the master off restores DND immediately, turning it on
-     * re-engages DND for a DND-enabled running session.
+     * re-engages DND for a DND-mode running session. Silent is unaffected.
      */
     fun applyDndMaster() {
         scope.launch {
             mutex.withLock {
                 loadPersistedLocked()
                 val cur = _active.value ?: return@withLock
+                if (cur.notificationMode != NotificationMode.DND) return@withLock
                 val master = prefs.dndMasterEnabled.first()
                 if (!master) {
                     dnd.restoreDnd()
-                } else if (cur.dndEnabled && dnd.isPolicyAccessGranted()) {
+                } else if (dnd.isPolicyAccessGranted()) {
                     dnd.enableDnd()
                 }
             }
@@ -227,7 +248,7 @@ object SessionManager {
             iconName = mode.iconName,
             accentIndex = mode.accentIndex,
             strictMode = mode.strictMode,
-            dndEnabled = mode.dndEnabled,
+            notificationMode = mode.notificationMode,
             blockedApps = mode.blockedApps,
             keepAwake = mode.keepAwake,
             autoEndMinutes = mode.autoEndMinutes?.takeIf { it > 0 },
@@ -235,8 +256,8 @@ object SessionManager {
             allowedApps = mode.allowedApps,
             startedAtEpoch = startedAt,
         )
-        // Universal master switch gates per-mode DND.
-        if (mode.dndEnabled && prefs.dndMasterEnabled.first()) dnd.enableDnd()
+        // Universal master switch gates DND; silent applies directly.
+        applyNotification(mode.notificationMode)
         prefs.saveActiveSession(snap)
         tag?.let { repo.touchTag(it.id) }
         _active.value = snap
@@ -271,7 +292,8 @@ object SessionManager {
                 endReason = reason,
             )
         )
-        if (snap.dndEnabled) dnd.restoreDnd()
+        if (snap.notificationMode == NotificationMode.DND) dnd.restoreDnd()
+        if (snap.notificationMode == NotificationMode.SILENT) ringer.restore()
         prefs.clearActiveSession()
         _active.value = null
         stopService()
@@ -301,7 +323,12 @@ object SessionManager {
                 endReason = EndReason.REBOOT,
             )
         )
-        if (snap.dndEnabled) DndController(container.appContext, p).restoreDnd()
+        if (snap.notificationMode == NotificationMode.DND) {
+            DndController(container.appContext, p).restoreDnd()
+        }
+        if (snap.notificationMode == NotificationMode.SILENT) {
+            RingerController(container.appContext, p).restore()
+        }
         p.clearActiveSession()
     }
 

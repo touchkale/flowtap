@@ -136,19 +136,12 @@ fun ModesScreen(
             ),
         ) {
             item(key = "header") {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        stringResource(R.string.modes_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = palette.textPrimary,
-                    )
-                    Spacer(Modifier.height(Spacing.xxs))
-                    Text(
-                        stringResource(R.string.modes_subtitle),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = palette.textSecondary,
-                    )
-                }
+                Text(
+                    stringResource(R.string.modes_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = palette.textPrimary,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 Spacer(Modifier.height(Spacing.sectionGap))
             }
 

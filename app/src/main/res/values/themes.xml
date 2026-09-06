@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Flowtap" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#0B0F14</item>
+        <item name="android:windowBackground">#0A0E1A</item>
         <!-- Transparent so edge-to-edge content shows through; icon contrast
             is driven at runtime per Compose theme (see SystemBarAppearance). -->
         <item name="android:statusBarColor">@android:color/transparent</item>
@@ -21,7 +21,7 @@
 
     <!-- Fullscreen overlay for blocked apps -->
     <style name="Theme.BlockOverlay" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#0A1411</item>
+        <item name="android:windowBackground">#0A1410</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>

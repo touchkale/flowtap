@@ -18,7 +18,6 @@
     <string name="common_off">Off</string>
     <string name="common_continue">Continue</string>
     <string name="common_end_session">End session</string>
-    <string name="common_goal_x">Goal %1$s</string>
 
     <!-- Launcher shortcuts -->
     <string name="shortcut_start">Start focus</string>
@@ -40,17 +39,13 @@
     <string name="home_todays_focus">Today\'s focus</string>
     <string name="home_goal_reached">Goal reached</string>
     <string name="home_percent_of_goal">%1$d%% of goal</string>
-    <string name="home_deep_work_today">Deep work today</string>
     <string name="home_goal_complete">Daily goal complete — nice work.</string>
-    <string name="home_remaining_x">%1$s left to reach your goal</string>
     <string name="home_start">Tap NFC tag to start</string>
     <string name="home_strict_only_hint">All modes are strict — start with a tag</string>
-    <string name="home_soft_hint">Tap your NFC tag instead</string>
     <string name="home_strict_on">Strict mode on</string>
     <string name="home_strict_off">Strict mode off</string>
     <string name="home_hardcore">Hardcore mode</string>
     <string name="home_dnd_on">DND on</string>
-    <string name="home_dnd_off">DND off</string>
     <string name="home_active">Active</string>
     <string name="home_todays_total">today\'s total</string>
     <string name="home_or_tap_tag">or tap your NFC tag</string>
@@ -67,17 +62,17 @@
     <string name="home_timer_cd_x">%1$s focused today</string>
     <string name="home_select_mode">Select mode</string>
     <string name="home_mode_dropdown_cd">Choose mode to preview</string>
+    <string name="home_goal_remaining_x">Goal %1$s · %2$s left</string>
+    <string name="home_silent">Silent</string>
+    <string name="home_notif_off">Notifications off</string>
 
     <!-- Tags & modes -->
     <string name="tags_title">Tags</string>
-    <string name="tags_subtitle">Pair stickers to your modes</string>
     <string name="tags_add">Add tag</string>
     <string name="tags_your_tags">Your tags</string>
-    <string name="tags_modes">Modes</string>
-    <string name="tags_create_mode">Create mode</string>
-    <string name="tags_no_modes_hint">No modes yet — create one to start blocking apps.</string>
     <string name="tags_empty_title">No tags yet</string>
     <string name="tags_empty_subtitle">Add an NFC sticker and tap it to your phone.</string>
+    <string name="tags_pair_first">Pair your first tag</string>
     <string name="tags_unknown_mode">Unknown</string>
     <string name="tags_uid_mode">UID %1$s · %2$s</string>
     <string name="tags_delete_title">Delete %1$s?</string>
@@ -87,8 +82,6 @@
     <string name="tags_bound_mode">Bound mode</string>
     <string name="tags_edit_mode">Edit mode</string>
     <string name="tags_mode_name">Mode name</string>
-    <string name="tags_dnd">Do Not Disturb</string>
-    <string name="tags_dnd_sub">Silence notifications during this mode</string>
     <string name="tags_strict">Strict mode</string>
     <string name="tags_strict_sub">Only the tag that started the session can end it</string>
     <string name="tags_blocked_apps">Blocked apps</string>
@@ -96,13 +89,11 @@
     <string name="tags_edit_mode_cd">Edit mode</string>
     <string name="tags_delete_mode_cd">Delete mode</string>
     <string name="tags_chip_dnd">DND</string>
-    <string name="tags_chip_no_dnd">No DND</string>
     <string name="tags_chip_strict">Strict</string>
     <string name="tags_chip_flexible">Flexible</string>
 
     <!-- Modes -->
     <string name="modes_title">Modes</string>
-    <string name="modes_subtitle">Tune each mode — add as many as you like</string>
     <string name="modes_add">Add mode</string>
     <string name="modes_create_mode">Create mode</string>
     <string name="modes_empty_title">No modes yet</string>
@@ -111,21 +102,17 @@
     <string name="modes_duplicate_cd">Duplicate mode</string>
     <string name="modes_active_locked">A session is running — its mode can\'t be deleted until it ends.</string>
     <string name="modes_keep_awake">Keep screen awake</string>
-    <string name="modes_keep_awake_sub">Override the global setting for this mode</string>
     <string name="modes_keep_system">System</string>
     <string name="modes_keep_on">On</string>
     <string name="modes_keep_off">Off</string>
     <string name="modes_auto_end">Auto-end timer</string>
-    <string name="modes_auto_end_sub">End the session automatically after this long (off = unlimited)</string>
     <string name="modes_auto_off">Off</string>
     <string name="modes_auto_custom_hint">Minutes (5–720)</string>
     <string name="modes_block_mode">Enforcement</string>
-    <string name="modes_block_mode_sub">Blocklist blocks only the selected apps. Allowlist blocks everything except the selected apps.</string>
     <string name="modes_blocklist">Blocklist</string>
     <string name="modes_allowlist">Allowlist</string>
     <string name="modes_allowed_apps">Allowed apps</string>
     <string name="modes_launch_app">Launch app on start</string>
-    <string name="modes_launch_sub">Opened automatically when this mode starts (optional)</string>
     <string name="modes_launch_none">None</string>
     <string name="modes_launch_search">Search apps</string>
     <string name="modes_chip_allowlist_x">%1$d allowed</string>
@@ -142,15 +129,29 @@
     <string name="modes_tags_now_x">Now: %1$s</string>
     <string name="modes_tags_empty">No other tags to pair — add one from the Tags tab.</string>
     <string name="modes_goal_title">Daily goal for this mode</string>
-    <string name="modes_goal_sub">How much focused time counts as a complete day for this mode</string>
-    <string name="modes_goal_hours">Hours (0–24)</string>
-    <string name="modes_goal_minutes">Minutes (0–59)</string>
-    <string name="modes_goal_preview_x">Goal: %1$s per day</string>
+    <string name="modes_goal_custom">Custom</string>
+    <string name="modes_goal_custom_x">Custom · %1$s</string>
+    <string name="modes_goal_custom_title">Custom daily goal</string>
+    <string name="modes_goal_hours_label">Hours</string>
+    <string name="modes_goal_minutes_label">Minutes</string>
     <string name="modes_chip_goal_x">Goal %1$s</string>
+    <string name="modes_chip_silent">Silent</string>
+    <string name="modes_chip_none">None</string>
+    <string name="modes_advanced">Advanced settings</string>
+    <string name="modes_notif_title">Notifications during sessions</string>
+    <string name="modes_notif_none">None</string>
+    <string name="modes_notif_none_sub">Phone behaves normally</string>
+    <string name="modes_notif_silent">Silent</string>
+    <string name="modes_notif_silent_sub">Ringer goes silent, restored after</string>
+    <string name="modes_notif_dnd">DND</string>
+    <string name="modes_notif_dnd_sub">Do Not Disturb on, restored after</string>
+    <string name="modes_blocklist_sub">Only selected apps are blocked</string>
+    <string name="modes_allowlist_sub">Everything except selected apps is blocked</string>
 
     <!-- History -->
     <string name="history_title">History</string>
-    <string name="history_total">Total deep work</string>
+    <string name="history_this_week_title">Weekly goals</string>
+    <string name="history_mode_week_x">%1$s of %2$s</string>
     <string name="history_streak">Streak</string>
     <string name="history_longest">Longest</string>
     <string name="history_daily_avg">Daily avg</string>
@@ -170,44 +171,43 @@
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
-    <string name="settings_subtitle">Protection and behavior</string>
     <string name="settings_locked_1">Settings are locked while a hardcore session is running.</string>
     <string name="settings_locked_2">End the session with your NFC tag to change them.</string>
     <string name="settings_blocking_method">Blocking method</string>
     <string name="settings_blocking_full">Full power (recommended)</string>
-    <string name="settings_blocking_full_sub">Instant blocking via accessibility. Some banking apps refuse to open while it is on.</string>
+    <string name="settings_blocking_full_sub">Instant. Breaks banking apps.</string>
     <string name="settings_blocking_compat">Compatibility</string>
-    <string name="settings_blocking_compat_sub">~2s delay, uses more battery. Use when banking apps must work or without accessibility.</string>
+    <string name="settings_blocking_compat_sub">~2s delay. Banking apps work.</string>
     <string name="settings_payment_title">Banking apps detected</string>
-    <string name="settings_payment_sub">They refuse to open while full-power blocking is on. Switch to compatibility mode.</string>
+    <string name="settings_payment_sub">They need compatibility mode.</string>
     <string name="settings_payment_action">Switch to compatibility</string>
     <string name="settings_perm_usage">Usage access</string>
-    <string name="settings_perm_usage_on">Allowed — compatibility mode can see the foreground app</string>
-    <string name="settings_perm_usage_off">Allow usage access for compatibility blocking</string>
+    <string name="settings_perm_usage_on">Compatibility can detect apps</string>
+    <string name="settings_perm_usage_off">Needed to see the foreground app</string>
     <string name="settings_perm_overlay">Draw over apps</string>
-    <string name="settings_perm_overlay_on">Allowed — block screen can appear without accessibility</string>
-    <string name="settings_perm_overlay_off">Allow drawing over apps for compatibility blocking</string>
+    <string name="settings_perm_overlay_on">Block screen works</string>
+    <string name="settings_perm_overlay_off">Needed for the block screen</string>
     <string name="settings_protection">Protection</string>
     <string name="settings_uninstall_prot">Uninstall protection</string>
     <string name="settings_admin_explanation">While FlowTap is a device administrator, it cannot be uninstalled. This protects your focus sessions from impulsive removal.</string>
-    <string name="settings_uninstall_prot_on">Active — FlowTap cannot be uninstalled</string>
-    <string name="settings_uninstall_prot_off">Enable Device Admin to block uninstall</string>
+    <string name="settings_uninstall_prot_on">Active — can\'t be uninstalled</string>
+    <string name="settings_uninstall_prot_off">Block uninstall</string>
     <string name="settings_app_blocking">App blocking</string>
-    <string name="settings_app_blocking_on">Active — blocked apps are returned home</string>
-    <string name="settings_app_blocking_off">Enable accessibility to block apps</string>
+    <string name="settings_app_blocking_on">Blocked apps return home</string>
+    <string name="settings_app_blocking_off">Turn on to block apps</string>
     <string name="settings_dnd">Do Not Disturb</string>
-    <string name="settings_dnd_on">Allowed — silence during sessions, or tap Home DND chip</string>
-    <string name="settings_dnd_off">Allow DND access to silence sessions</string>
+    <string name="settings_dnd_on">Silence during sessions</string>
+    <string name="settings_dnd_off">Silence during sessions</string>
     <string name="settings_notif">Session notifications</string>
-    <string name="settings_notif_off">Denied — timer and completion alerts are silent. Tap to allow.</string>
+    <string name="settings_notif_off">Tap to allow alerts.</string>
     <string name="settings_behavior">Behavior</string>
     <string name="settings_dnd_master">Use Do Not Disturb</string>
-    <string name="settings_dnd_master_on">Sessions silence notifications when the mode allows it</string>
-    <string name="settings_dnd_master_off">Sessions never touch Do Not Disturb</string>
+    <string name="settings_dnd_master_on">Silence when modes allow</string>
+    <string name="settings_dnd_master_off">Never touch DND</string>
     <string name="settings_hardcore">Hardcore mode</string>
-    <string name="settings_hardcore_sub">Disables the End button and settings while a session is running</string>
+    <string name="settings_hardcore_sub">No End button or settings mid-session</string>
     <string name="settings_awake">Keep screen awake</string>
-    <string name="settings_awake_sub">Prevents the screen from sleeping while a session is active</string>
+    <string name="settings_awake_sub">Screen stays on mid-session</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_theme_title">Theme</string>
     <string name="settings_theme_sub">Light, dark, or follow the system</string>
@@ -216,10 +216,10 @@
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_about">About</string>
     <string name="settings_version_x">FlowTap v%1$s</string>
-    <string name="settings_version_sub">Everything stays on this device. No accounts, no cloud.</string>
+    <string name="settings_version_sub">On-device only. No accounts.</string>
     <string name="settings_uninstall">Uninstall FlowTap</string>
-    <string name="settings_uninstall_on">Deactivates uninstall protection, then opens the system Uninstall screen</string>
-    <string name="settings_uninstall_off">Opens the system Uninstall screen</string>
+    <string name="settings_uninstall_on">Protection off first, then system screen</string>
+    <string name="settings_uninstall_off">Opens the system screen</string>
     <string name="settings_uninstall_title">Uninstall FlowTap?</string>
     <string name="settings_uninstall_admin_note">Uninstall protection will be deactivated first.\n\n</string>
     <string name="settings_uninstall_session_note">A focus session is running — it will end immediately.\n\n</string>
@@ -260,9 +260,9 @@
     <string name="ob_hardcore_sub">Disables the End button and locks settings while a session runs. End with your NFC tag.</string>
     <string name="ob_method_title">Blocking method</string>
     <string name="ob_method_full">Full power (recommended)</string>
-    <string name="ob_method_full_sub">Instant blocking. Some banking apps refuse to open while it is on.</string>
+    <string name="ob_method_full_sub">Instant. Breaks banking apps.</string>
     <string name="ob_method_compat">Compatibility</string>
-    <string name="ob_method_compat_sub">~2s delay, more battery. Works without accessibility; banking apps keep working.</string>
+    <string name="ob_method_compat_sub">~2s delay. Banking apps work.</string>
     <string name="ob_search">Search apps</string>
     <string name="ob_clear_search">Clear search</string>
     <string name="ob_no_apps">No apps found</string>

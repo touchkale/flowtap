@@ -103,12 +103,6 @@ fun TagsScreen(container: AppContainer) {
                         style = MaterialTheme.typography.headlineMedium,
                         color = palette.textPrimary,
                     )
-                    Spacer(Modifier.height(Spacing.xxs))
-                    Text(
-                        stringResource(R.string.tags_subtitle),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = palette.textSecondary,
-                    )
                 }
                 Button(
                     onClick = {
@@ -128,15 +122,31 @@ fun TagsScreen(container: AppContainer) {
             }
             Spacer(Modifier.height(Spacing.sectionGap))
 
-            SectionHeader(title = stringResource(R.string.tags_your_tags))
-            Spacer(Modifier.height(Spacing.headerGap))
-
             if (tags.isEmpty()) {
                 EmptyState(
                     title = stringResource(R.string.tags_empty_title),
                     subtitle = stringResource(R.string.tags_empty_subtitle),
+                    pulsing = true,
                 )
+                Spacer(Modifier.height(Spacing.lg))
+                Button(
+                    onClick = {
+                        context.startActivity(Intent(context, PairTagActivity::class.java))
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(Dimens.primaryButtonHeight),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
+                ) {
+                    Text(
+                        stringResource(R.string.tags_pair_first),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
             } else {
+                SectionHeader(title = stringResource(R.string.tags_your_tags))
+                Spacer(Modifier.height(Spacing.headerGap))
                 tags.forEach { tag ->
                     TagCard(
                         tag = tag,
