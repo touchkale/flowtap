@@ -397,45 +397,65 @@ private fun SessionDetailDialog(
     onDelete: () -> Unit,
 ) {
     val palette = LocalFocusPalette.current
+    var confirmDelete by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(modeName) },
+        title = { Text(if (confirmDelete) stringResource(R.string.history_delete_title) else modeName) },
         text = {
-            Column {
-                DetailRow(
-                    stringResource(R.string.history_started),
-                    TimeUtil.formatClock(session.startedAt),
-                )
-                DetailRow(
-                    stringResource(R.string.history_ended),
-                    if (session.endedAt > 0) TimeUtil.formatClock(session.endedAt) else "—",
-                )
-                DetailRow(
-                    stringResource(R.string.history_duration),
-                    TimeUtil.formatDuration(session.durationMs),
-                )
-                DetailRow(
-                    stringResource(R.string.history_ended_by),
-                    prettyEndReason(session.endReason.value),
-                )
+            if (confirmDelete) {
+                Text(stringResource(R.string.history_delete_sub))
+            } else {
+                Column {
+                    DetailRow(
+                        stringResource(R.string.history_started),
+                        TimeUtil.formatClock(session.startedAt),
+                    )
+                    DetailRow(
+                        stringResource(R.string.history_ended),
+                        if (session.endedAt > 0) TimeUtil.formatClock(session.endedAt) else "—",
+                    )
+                    DetailRow(
+                        stringResource(R.string.history_duration),
+                        TimeUtil.formatDuration(session.durationMs),
+                    )
+                    DetailRow(
+                        stringResource(R.string.history_ended_by),
+                        prettyEndReason(session.endReason.value),
+                    )
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
+            if (confirmDelete) {
+                TextButton(onClick = onDelete) {
+                    Text(
+                        stringResource(R.string.common_delete),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            } else {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
+            }
         },
         dismissButton = {
-            TextButton(onClick = onDelete) {
-                Icon(
-                    Icons.Outlined.Delete,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.error,
-                )
-                Spacer(Modifier.size(4.dp))
-                Text(
-                    stringResource(R.string.common_delete),
-                    color = MaterialTheme.colorScheme.error,
-                )
+            if (confirmDelete) {
+                TextButton(onClick = { confirmDelete = false }) {
+                    Text(stringResource(R.string.common_cancel))
+                }
+            } else {
+                TextButton(onClick = { confirmDelete = true }) {
+                    Icon(
+                        Icons.Outlined.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.error,
+                    )
+                    Spacer(Modifier.size(4.dp))
+                    Text(
+                        stringResource(R.string.common_delete),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             }
         },
     )

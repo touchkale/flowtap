@@ -103,6 +103,7 @@
     <string name="modes_empty_subtitle">Create your first mode to start blocking apps.</string>
     <string name="modes_duplicate">Duplicate</string>
     <string name="modes_duplicate_cd">Duplicate mode</string>
+    <string name="modes_more_cd">More actions</string>
     <string name="modes_active_locked">A session is running — its mode can\'t be deleted until it ends.</string>
     <string name="modes_keep_awake">Keep screen awake</string>
     <string name="modes_keep_system">System</string>
@@ -168,6 +169,8 @@
     <string name="history_chart_empty_hint">Complete a session to fill your week.</string>
     <string name="history_chart_cd_x">Weekly focus: %1$s Daily goal %2$s.</string>
     <string name="history_empty_title">No sessions yet</string>
+    <string name="history_delete_title">Delete this session?</string>
+    <string name="history_delete_sub">Totals and charts update immediately. This can\'t be undone.</string>
     <string name="history_empty_subtitle">Complete your first focus session to see it here.</string>
     <string name="history_started">Started</string>
     <string name="history_ended">Ended</string>
@@ -239,6 +242,7 @@
     <string name="settings_uninstall_session_note">A focus session is running — it will end immediately.\n\n</string>
     <string name="settings_uninstall_confirm_note">You\'ll confirm the removal on the system screen that opens next.</string>
     <string name="settings_uninstall_action">Uninstall</string>
+    <string name="settings_open_failed">Couldn\'t open system settings — please open them manually.</string>
 
     <!-- Onboarding -->
     <string name="ob_step_x">Step %1$d of 3</string>

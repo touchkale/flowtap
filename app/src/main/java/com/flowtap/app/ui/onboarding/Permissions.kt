@@ -16,6 +16,23 @@ import com.flowtap.app.session.DndController
 /** Checks and deep-links for every permission the app needs. */
 object Permissions {
 
+    /** Starts an intent, toasting a recovery action when the system rejects it (U1). */
+    private fun startSafely(context: Context, intent: Intent) {
+        val ok = runCatching {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        }.isSuccess
+        if (!ok) {
+            runCatching {
+                android.widget.Toast.makeText(
+                    context,
+                    context.getString(R.string.settings_open_failed),
+                    android.widget.Toast.LENGTH_LONG,
+                ).show()
+            }
+        }
+    }
+
     fun hasNfcHardware(context: Context): Boolean =
         NfcAdapter.getDefaultAdapter(context) != null
 
@@ -23,7 +40,7 @@ object Permissions {
         NfcAdapter.getDefaultAdapter(context)?.isEnabled == true
 
     fun enableNfc(context: Context) {
-        runCatching { context.startActivity(Intent(Settings.ACTION_NFC_SETTINGS)) }
+        startSafely(context, Intent(Settings.ACTION_NFC_SETTINGS))
     }
 
     fun isAccessibilityEnabled(context: Context): Boolean {
@@ -41,7 +58,7 @@ object Permissions {
     }
 
     fun enableAccessibility(context: Context) {
-        runCatching { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+        startSafely(context, Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
     }
 
     fun isDndGranted(context: Context): Boolean {
@@ -50,9 +67,7 @@ object Permissions {
     }
 
     fun enableDnd(context: Context) {
-        runCatching {
-            context.startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
-        }
+        startSafely(context, Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
     }
 
     fun isDeviceAdminActive(context: Context): Boolean {
@@ -62,16 +77,15 @@ object Permissions {
 
     fun enableDeviceAdmin(context: Context) {
         val component = ComponentName(context, FocusDeviceAdminReceiver::class.java)
-        runCatching {
-            context.startActivity(
-                Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
-                    .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, component)
-                    .putExtra(
-                        DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                        context.getString(R.string.settings_admin_explanation),
-                    )
-            )
-        }
+        startSafely(
+            context,
+            Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+                .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, component)
+                .putExtra(
+                    DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                    context.getString(R.string.settings_admin_explanation),
+                ),
+        )
     }
 
     /** Deactivates the device admin so the app can be uninstalled. */
@@ -89,14 +103,13 @@ object Permissions {
      * REQUEST_DELETE_PACKAGES permission even for self-uninstall).
      */
     fun requestUninstall(context: Context) {
-        runCatching {
-            context.startActivity(
-                Intent(
-                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.parse("package:${context.packageName}"),
-                ),
-            )
-        }
+        startSafely(
+            context,
+            Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:${context.packageName}"),
+            ),
+        )
     }
 
     fun areNotificationsGranted(context: Context): Boolean =
@@ -114,14 +127,13 @@ object Permissions {
 
     /** Opens the app-info screen (for permanently-denied permissions). */
     fun openAppSettings(context: Context) {
-        runCatching {
-            context.startActivity(
-                Intent(
-                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.parse("package:${context.packageName}"),
-                ),
-            )
-        }
+        startSafely(
+            context,
+            Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:${context.packageName}"),
+            ),
+        )
     }
 
     private fun Context.findActivity(): android.app.Activity? {
@@ -139,12 +151,11 @@ object Permissions {
     }
 
     fun enableBatteryOptimizationExemption(context: Context) {
-        runCatching {
-            context.startActivity(
-                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                    .setData(android.net.Uri.parse("package:${context.packageName}")),
-            )
-        }
+        startSafely(
+            context,
+            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                .setData(android.net.Uri.parse("package:${context.packageName}")),
+        )
     }
 
     /** UsageStats access for compatibility blocking (AppOps check). */
@@ -161,7 +172,7 @@ object Permissions {
     }
 
     fun openUsageAccessSettings(context: Context) {
-        runCatching { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+        startSafely(context, Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
     }
 
     /** Draw-over-apps for compatibility overlay windows. */
@@ -169,14 +180,13 @@ object Permissions {
         Settings.canDrawOverlays(context)
 
     fun openOverlaySettings(context: Context) {
-        runCatching {
-            context.startActivity(
-                Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    android.net.Uri.parse("package:${context.packageName}"),
-                ),
-            )
-        }
+        startSafely(
+            context,
+            Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                android.net.Uri.parse("package:${context.packageName}"),
+            ),
+        )
     }
 
     /** Android 16+ gate on receiving NFC tag intents. */
@@ -188,8 +198,6 @@ object Permissions {
 
     fun allowNfcTagIntents(context: Context) {
         if (Build.VERSION.SDK_INT < 36) return
-        runCatching {
-            context.startActivity(Intent(NfcAdapter.ACTION_CHANGE_TAG_INTENT_PREFERENCE))
-        }
+        startSafely(context, Intent(NfcAdapter.ACTION_CHANGE_TAG_INTENT_PREFERENCE))
     }
 }

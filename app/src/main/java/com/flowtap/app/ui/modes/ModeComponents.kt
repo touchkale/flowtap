@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -23,13 +25,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Checklist
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Launch
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Checkbox
@@ -101,6 +101,29 @@ private val AUTO_PRESETS = listOf(15, 25, 30, 45, 60, 90)
 /** Daily-goal presets in minutes; the last chip opens the custom dialog. */
 private val GOAL_PRESETS = listOf(60, 120, 240, 360)
 
+/** One-line summary for a mode card: apps · ending · sound · goal · tags. */
+@Composable
+private fun modeSummaryLine(mode: FocusMode, tagCount: Int): String {
+    val apps = if (mode.allowlistOnly) {
+        stringResource(R.string.modes_chip_allowlist_x, mode.allowedApps.size)
+    } else {
+        pluralStringResource(R.plurals.plural_blocked_short, mode.blockedApps.size, mode.blockedApps.size)
+    }
+    val ending = stringResource(
+        if (mode.strictMode) R.string.tags_chip_strict else R.string.tags_chip_flexible,
+    )
+    val sound = stringResource(
+        when (mode.notificationMode) {
+            com.flowtap.app.data.model.NotificationMode.DND -> R.string.tags_chip_dnd
+            com.flowtap.app.data.model.NotificationMode.SILENT -> R.string.modes_chip_silent
+            com.flowtap.app.data.model.NotificationMode.NONE -> R.string.modes_chip_none
+        },
+    )
+    val goal = stringResource(R.string.modes_chip_goal_x, formatGoalShort(mode.dailyGoalMinutes))
+    val tags = pluralStringResource(R.plurals.plural_mode_tags, tagCount, tagCount)
+    return listOf(apps, ending, sound, goal, tags).joinToString(" · ")
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ModeCard(
@@ -113,43 +136,72 @@ fun ModeCard(
     deleteEnabled: Boolean = true,
 ) {
     val palette = LocalFocusPalette.current
+    var menuOpen by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(palette.card, MaterialTheme.shapes.medium)
             .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
             .clip(MaterialTheme.shapes.medium)
+            .clickable(onClick = onEdit, role = Role.Button)
             .padding(horizontal = Spacing.cardPadding, vertical = Spacing.md),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                mode.name,
-                style = MaterialTheme.typography.titleMedium,
-                color = palette.textPrimary,
-                modifier = Modifier.weight(1f),
-            )
-            IconButton(onClick = onEdit) {
-                Icon(
-                    Icons.Outlined.Edit,
-                    contentDescription = stringResource(R.string.tags_edit_mode_cd),
-                    tint = palette.accentText,
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    mode.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = palette.textPrimary,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(Spacing.xxs))
+                // One summary line instead of competing chips + icon buttons.
+                Text(
+                    modeSummaryLine(mode, tagCount),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = palette.textSecondary,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
             }
-            IconButton(onClick = onDuplicate) {
-                Icon(
-                    Icons.Outlined.ContentCopy,
-                    contentDescription = stringResource(R.string.modes_duplicate_cd),
-                    tint = palette.accentText,
-                )
-            }
-            IconButton(onClick = onDelete, enabled = deleteEnabled) {
-                Icon(
-                    Icons.Outlined.Delete,
-                    contentDescription = stringResource(R.string.tags_delete_mode_cd),
-                    tint = if (deleteEnabled) palette.textTertiary else palette.textTertiary.copy(alpha = 0.4f),
-                )
+            Box {
+                IconButton(onClick = { menuOpen = true }) {
+                    Icon(
+                        Icons.Outlined.MoreVert,
+                        contentDescription = stringResource(R.string.modes_more_cd),
+                        tint = palette.textSecondary,
+                    )
+                }
+                androidx.compose.material3.DropdownMenu(
+                    expanded = menuOpen,
+                    onDismissRequest = { menuOpen = false },
+                ) {
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Text(stringResource(R.string.tags_edit_mode)) },
+                        onClick = {
+                            menuOpen = false
+                            onEdit()
+                        },
+                    )
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Text(stringResource(R.string.modes_duplicate)) },
+                        onClick = {
+                            menuOpen = false
+                            onDuplicate()
+                        },
+                    )
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Text(stringResource(R.string.common_delete)) },
+                        enabled = deleteEnabled,
+                        onClick = {
+                            menuOpen = false
+                            onDelete()
+                        },
+                    )
+                }
             }
         }
         Spacer(Modifier.height(Spacing.sm))

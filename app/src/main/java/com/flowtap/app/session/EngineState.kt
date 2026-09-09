@@ -13,4 +13,8 @@ object EngineState {
 
     @Volatile
     var hardcore: Boolean = false
+
+    /** App theme override for synchronous surfaces (overlay); null = follow system. */
+    @Volatile
+    var darkTheme: Boolean? = null
 }

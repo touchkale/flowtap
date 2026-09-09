@@ -47,6 +47,7 @@ class SettingsViewModel(private val settings: SettingsDataStore) : ViewModel() {
     }
 
     fun setThemeMode(mode: ThemeMode) {
+        // Overlay cache syncs via the FlowtapApp theme collector (U1).
         viewModelScope.launch { settings.setThemeMode(mode) }
     }
 

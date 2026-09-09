@@ -76,6 +76,7 @@ fun TagsScreen(container: AppContainer) {
     val modeNames by vm.modeNames.collectAsStateWithLifecycle()
 
     var editingTag by remember { mutableStateOf<FocusTag?>(null) }
+    var deletingTag by remember { mutableStateOf<FocusTag?>(null) }
     val sidePadding = rememberAdaptiveSidePadding()
 
     // MainNav's Scaffold already applies the status-bar inset; only the
@@ -152,7 +153,7 @@ fun TagsScreen(container: AppContainer) {
                         tag = tag,
                         modeName = modeNames[tag.modeId] ?: stringResource(R.string.tags_unknown_mode),
                         onClick = { editingTag = tag },
-                        onDelete = { vm.deleteTag(tag) },
+                        onDelete = { deletingTag = tag },
                     )
                     Spacer(Modifier.height(Spacing.rowGap))
                 }
@@ -169,6 +170,31 @@ fun TagsScreen(container: AppContainer) {
             onSave = { updated ->
                 vm.saveTag(updated)
                 editingTag = null
+            },
+        )
+    }
+
+    // U1: destructive deletes confirm first; history is preserved.
+    deletingTag?.let { tag ->
+        AlertDialog(
+            onDismissRequest = { deletingTag = null },
+            title = { Text(stringResource(R.string.tags_delete_title, tag.name)) },
+            text = { Text(stringResource(R.string.tags_delete_keep_history)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.deleteTag(tag)
+                    deletingTag = null
+                }) {
+                    Text(
+                        stringResource(R.string.common_delete),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deletingTag = null }) {
+                    Text(stringResource(R.string.common_cancel))
+                }
             },
         )
     }

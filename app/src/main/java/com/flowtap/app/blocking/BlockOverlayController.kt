@@ -95,10 +95,11 @@ class BlockOverlayController(private val service: AccessibilityService) {
         holdButton?.isPressed = false
     }
 
-    /** Light or dark blocking screen, following the system night mode. */
+    /** Light or dark blocking screen, following the app theme override (U1). */
     private val isDark: Boolean
-        get() = (service.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-            Configuration.UI_MODE_NIGHT_YES
+        get() = com.flowtap.app.session.EngineState.darkTheme
+            ?: ((service.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES)
 
     private val screenOffReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {

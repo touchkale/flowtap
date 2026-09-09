@@ -22,14 +22,23 @@ class FlowtapApp : Application() {
         SessionManager.init(container)
         // F1: guarantee the default "Deep Work" mode exists on first launch.
         appScope.launch { container.focusRepository.ensureSeeded() }
-        // Sync synchronous engine caches for services/overlays (S2/S4).
+        // Sync synchronous engine caches for services/overlays (S2/S4/U1).
         appScope.launch {
             kotlinx.coroutines.flow.combine(
                 container.settingsDataStore.blockingMethod,
                 container.settingsDataStore.hardcoreMode,
-            ) { method, hardcore ->
+                container.settingsDataStore.themeMode,
+            ) { method, hardcore, theme ->
                 com.flowtap.app.session.EngineState.blockingMethod = method
                 com.flowtap.app.session.EngineState.hardcore = hardcore
+                val sysDark = resources.configuration.uiMode and
+                    android.content.res.Configuration.UI_MODE_NIGHT_MASK ==
+                    android.content.res.Configuration.UI_MODE_NIGHT_YES
+                com.flowtap.app.session.EngineState.darkTheme = when (theme) {
+                    com.flowtap.app.data.prefs.ThemeMode.LIGHT -> false
+                    com.flowtap.app.data.prefs.ThemeMode.DARK -> true
+                    com.flowtap.app.data.prefs.ThemeMode.SYSTEM -> sysDark
+                }
             }.collect {}
         }
     }
