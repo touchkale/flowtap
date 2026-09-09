@@ -172,13 +172,9 @@ class PairTagActivity : ComponentActivity() {
         val name = currentTagName
         app.appScope.launch {
             try {
-                val (ok, msgRes) = NdefWriter.writeModeId(intent, modeId)
-                if (!ok) {
-                    runOnUiThread {
-                        Toast.makeText(this@PairTagActivity, getString(msgRes), Toast.LENGTH_LONG).show()
-                    }
-                    return@launch
-                }
+                // N2: check UID before the destructive physical write, so an
+                // already-paired tag keeps its payload. Then await DB save
+                // before reporting success — success must mean persisted.
                 val uid = NdefWriter.parseUid(intent)
                 if (uid.isNullOrEmpty()) {
                     runOnUiThread {
@@ -192,30 +188,51 @@ class PairTagActivity : ComponentActivity() {
                 }
                 val repo = app.container.focusRepository
                 val existing = repo.getTagByUid(uid)
-                runOnUiThread {
-                    if (existing != null) {
+                if (existing != null) {
+                    runOnUiThread {
                         Toast.makeText(
                             this@PairTagActivity,
                             getString(R.string.nfc_already_paired, existing.name),
                             Toast.LENGTH_SHORT,
                         ).show()
-                    } else {
-                        app.appScope.launch {
-                            repo.addTag(
-                                FocusTag(
-                                    name = name?.takeIf { it.isNotBlank() }
-                                        ?: getString(R.string.nfc_new_tag),
-                                    uidHex = uid,
-                                    modeId = modeId,
-                                )
-                            )
-                        }
+                        finish()
+                    }
+                    return@launch
+                }
+                val (ok, msgRes) = NdefWriter.writeModeId(intent, modeId)
+                if (!ok) {
+                    runOnUiThread {
+                        Toast.makeText(this@PairTagActivity, getString(msgRes), Toast.LENGTH_LONG).show()
+                    }
+                    return@launch
+                }
+                try {
+                    repo.addTag(
+                        FocusTag(
+                            name = name?.takeIf { it.isNotBlank() }
+                                ?: getString(R.string.nfc_new_tag),
+                            uidHex = uid,
+                            modeId = modeId,
+                        )
+                    )
+                } catch (e: Exception) {
+                    // Physical write succeeded but DB did not: surface recovery
+                    // guidance instead of a false success.
+                    runOnUiThread {
                         Toast.makeText(
                             this@PairTagActivity,
-                            getString(R.string.nfc_paired),
-                            Toast.LENGTH_SHORT,
+                            getString(R.string.nfc_pair_failed, e.message),
+                            Toast.LENGTH_LONG,
                         ).show()
                     }
+                    return@launch
+                }
+                runOnUiThread {
+                    Toast.makeText(
+                        this@PairTagActivity,
+                        getString(R.string.nfc_paired),
+                        Toast.LENGTH_SHORT,
+                    ).show()
                     finish()
                 }
             } catch (e: Exception) {

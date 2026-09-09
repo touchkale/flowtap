@@ -53,23 +53,40 @@ class OnboardingViewModel(
         _selectedBlocked.value = packages
     }
 
-    /** Finds a mode by name (case-insensitive) or creates it. */
+    private val _draftModeId = MutableStateFlow<Long?>(null)
+    val draftModeId: StateFlow<Long?> = _draftModeId
+
+    /** Finds a mode by name (case-insensitive) or creates it; tracks it explicitly (O1). */
     suspend fun ensureMode(name: String, iconName: String): Long {
+        _draftModeId.value?.let { id ->
+            repo.modes.first().firstOrNull { it.id == id }?.let { return id }
+        }
         val existing = repo.modes.first().firstOrNull { it.name.equals(name, ignoreCase = true) }
-        return existing?.id ?: repo.addMode(FocusMode(name = name, iconName = iconName))
+        val id = existing?.id ?: repo.addMode(FocusMode(name = name, iconName = iconName))
+        _draftModeId.value = id
+        return id
     }
 
-    /** Persists blocked-app selection onto the first/default mode, then finishes. */
+    /**
+     * Persists blocked-app selection onto the explicit onboarding target mode
+     * (O1). An empty selection is honored — it clears the seeded defaults
+     * instead of silently preserving them.
+     */
     fun finish(onDone: () -> Unit) {
         if (_saving.value) return
         _saving.value = true
         viewModelScope.launch {
-            val mode = repo.modes.first().firstOrNull()
-            if (mode != null && _selectedBlocked.value.isNotEmpty()) {
-                repo.updateMode(mode.copy(blockedApps = _selectedBlocked.value.toList()))
+            try {
+                val modes = repo.modes.first()
+                val target = _draftModeId.value?.let { id -> modes.firstOrNull { it.id == id } }
+                    ?: modes.firstOrNull()
+                if (target != null) {
+                    repo.updateMode(target.copy(blockedApps = _selectedBlocked.value.toList()))
+                }
+            } finally {
+                _saving.value = false
+                onDone()
             }
-            _saving.value = false
-            onDone()
         }
     }
 

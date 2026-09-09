@@ -32,6 +32,9 @@ class SessionService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var compatJob: Job? = null
+    private var timeoutJob: Job? = null
+    private var lastForegroundPkg: String? = null
+    private var lastForegroundAt: Long = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -49,9 +52,13 @@ class SessionService : Service() {
                 if (snap == null) {
                     stopSelf()
                 } else {
+                    val hardcore = runCatching {
+                        (application as com.flowtap.app.FlowtapApp).container
+                            .settingsDataStore.hardcoreMode.first()
+                    }.getOrDefault(false)
                     startForeground(
                         Notifications.SESSION_NOTIF_ID,
-                        Notifications.sessionNotification(this@SessionService, snap),
+                        Notifications.sessionNotification(this@SessionService, snap, hardcore),
                     )
                     scheduleTimeout(snap)
                     startCompatPolling()
@@ -72,6 +79,11 @@ class SessionService : Service() {
         compatJob = scope.launch {
             val container = (application as com.flowtap.app.FlowtapApp).container
             var lastBlockedAt = 0L
+            val homePkgs = runCatching {
+                val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                packageManager.queryIntentActivities(home, 0)
+                    .map { it.activityInfo.packageName }.toSet()
+            }.getOrDefault(emptySet())
             while (true) {
                 delay(2000)
                 val snap = SessionManager.current ?: continue
@@ -79,9 +91,15 @@ class SessionService : Service() {
                     container.settingsDataStore.blockingMethod.first()
                 }.getOrDefault(BlockingMethod.FULL_POWER)
                 if (method != BlockingMethod.COMPATIBILITY) continue
-                val pkg = queryForegroundPackage() ?: continue
-                if (pkg == packageName) continue
-                if (pkg == "com.android.systemui" || pkg == "android") continue
+                // B2: retain foreground knowledge — if the poller misses the
+                // 5s window but the same app is still open, keep enforcing.
+                val queried = queryForegroundPackage()
+                val nowWall = System.currentTimeMillis()
+                val pkg = queried?.also {
+                    lastForegroundPkg = it
+                    lastForegroundAt = nowWall
+                } ?: lastForegroundPkg?.takeIf { nowWall - lastForegroundAt < 30_000 } ?: continue
+                if (com.flowtap.app.blocking.BlockExemptions.isExempt(pkg, packageName, homePkgs)) continue
                 val blocked = UsageBlockPoller.isBlocked(
                     pkg = pkg,
                     blockedApps = snap.blockedApps,
@@ -137,16 +155,24 @@ class SessionService : Service() {
     }
 
     private fun scheduleTimeout(snap: com.flowtap.app.data.model.ActiveSessionSnapshot) {
+        timeoutJob?.cancel()
+        val expectedId = snap.sessionId
         val maxRemaining = SessionManager.MAX_SESSION_MS - snap.elapsedMs()
         val autoRemaining = snap.autoEndRemainingMs()
         val remaining = if (autoRemaining != null) minOf(maxRemaining, autoRemaining) else maxRemaining
         if (remaining <= 0) {
-            SessionManager.endSession(com.flowtap.app.data.model.EndReason.TIMEOUT)
+            if (SessionManager.current?.sessionId == expectedId) {
+                SessionManager.endSession(com.flowtap.app.data.model.EndReason.TIMEOUT)
+            }
             return
         }
-        scope.launch {
+        // D2: single deadline per service start, guarded by session ID so a
+        // stale service never ends a newer session after rapid switching.
+        timeoutJob = scope.launch {
             delay(remaining)
-            SessionManager.endSession(com.flowtap.app.data.model.EndReason.TIMEOUT)
+            if (SessionManager.current?.sessionId == expectedId) {
+                SessionManager.endSession(com.flowtap.app.data.model.EndReason.TIMEOUT)
+            }
         }
     }
 
@@ -154,6 +180,7 @@ class SessionService : Service() {
 
     override fun onDestroy() {
         compatJob?.cancel()
+        timeoutJob?.cancel()
         scope.cancel()
         super.onDestroy()
     }

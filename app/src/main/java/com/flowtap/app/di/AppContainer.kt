@@ -17,7 +17,7 @@ class AppContainer(context: Context) {
     val settingsDataStore: SettingsDataStore by lazy { SettingsDataStore(appContext) }
 
     val focusRepository: FocusRepository by lazy {
-        FocusRepository(database.modeDao(), database.tagDao(), database.sessionDao())
+        FocusRepository(database.modeDao(), database.tagDao(), database.sessionDao(), database)
     }
 
     val statsRepository: StatsRepository by lazy { StatsRepository(focusRepository) }

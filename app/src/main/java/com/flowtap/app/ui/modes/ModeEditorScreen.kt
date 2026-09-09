@@ -74,43 +74,64 @@ fun ModeEditorScreen(
     modeId: Long?,
     onDone: () -> Unit,
 ) {
-    val vm: ModesViewModel = viewModel(factory = ModesViewModel.factory(container))
+    val vm: ModeEditorViewModel = viewModel(factory = ModeEditorViewModel.factory(container))
     val palette = LocalFocusPalette.current
 
     val modes by vm.modes.collectAsStateWithLifecycle()
     val allTags by vm.tags.collectAsStateWithLifecycle()
     val tagsByMode by vm.tagsByMode.collectAsStateWithLifecycle()
     val modeNames by vm.modeNames.collectAsStateWithLifecycle()
+    val isSaving by vm.isSaving.collectAsStateWithLifecycle()
+    val saveError by vm.saveError.collectAsStateWithLifecycle()
+    val attached by vm.attachTagIds.collectAsStateWithLifecycle()
     val isCreate = modeId == null
+    // Loading / not-found states (M5): never a blank screen.
+    if (!isCreate && modes.isEmpty()) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(
+                stringResource(R.string.modes_loading),
+                style = MaterialTheme.typography.bodyMedium,
+                color = palette.textSecondary,
+            )
+        }
+        return
+    }
     val mode: FocusMode? = if (isCreate) {
-        remember(modeId) { FocusMode(name = "", iconName = "work") }
+        FocusMode(name = "", iconName = "work")
     } else {
         modes.firstOrNull { it.id == modeId }
     }
     if (mode == null) {
-        // Edit target still resolving on first load, or deleted elsewhere:
-        // don't flash a blank form — leave once loaded and still absent.
-        if (modes.isNotEmpty()) {
-            LaunchedEffect(modeId) { onDone() }
+        // Deleted elsewhere: leave once loaded and still absent.
+        LaunchedEffect(modeId) { onDone() }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(
+                stringResource(R.string.modes_not_found),
+                style = MaterialTheme.typography.bodyMedium,
+                color = palette.textSecondary,
+            )
         }
         return
     }
 
-    val state = rememberModeEditorState(mode)
-    var attachTagIds by remember(modeId) { mutableStateOf(emptySet<Long>()) }
+    // M1: draft lives in the ViewModel, surviving rotation/recreation.
+    val state = vm.draftFor(mode)
+    val attachTagIds = attached
     var showDiscard by remember { mutableStateOf(false) }
     val sidePadding = rememberAdaptiveSidePadding()
+    val activeSession by com.flowtap.app.session.SessionManager.active.collectAsStateWithLifecycle()
+    val editingActive = activeSession?.modeId == mode.id
 
     // Tags already here can't be re-paired; everything else is tappable.
     val candidates = remember(allTags, modeId) { allTags.filter { it.modeId != modeId } }
-    val alreadyPaired = if (isCreate) 0 else tagsByMode[modeId]?.size ?: 0
+    val pairedHere = if (isCreate) emptyList() else tagsByMode[modeId] ?: emptyList()
     val dirty = state.isDirty() || attachTagIds.isNotEmpty()
 
     fun save() {
-        if (!state.saveEnabled) return
+        if (!state.saveEnabled || isSaving) return
         val updated = state.buildUpdated()
         if (isCreate && updated.name.isBlank()) return
-        vm.saveModeWithTags(updated, attachTagIds) { onDone() }
+        vm.save(updated, attachTagIds) { onDone() }
     }
 
     fun tryBack() {
@@ -144,10 +165,10 @@ fun ModeEditorScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = ::save, enabled = state.saveEnabled) {
+                    TextButton(onClick = ::save, enabled = state.saveEnabled && !isSaving) {
                         Text(
                             stringResource(R.string.common_save),
-                            color = if (state.saveEnabled) palette.accentText else palette.textTertiary,
+                            color = if (state.saveEnabled && !isSaving) palette.accentText else palette.textTertiary,
                         )
                     }
                 },
@@ -167,6 +188,15 @@ fun ModeEditorScreen(
                 .padding(horizontal = sidePadding),
         ) {
             Spacer(Modifier.height(Spacing.md))
+            // M4: edits apply to the next session while one is running.
+            if (editingActive) {
+                Text(
+                    stringResource(R.string.modes_next_session_note),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = palette.accentText,
+                )
+                Spacer(Modifier.height(Spacing.sm))
+            }
             ModeEditorForm(
                 state = state,
                 appListMaxHeight = 320.dp,
@@ -184,17 +214,16 @@ fun ModeEditorScreen(
                 style = MaterialTheme.typography.labelLarge,
                 color = palette.textSecondary,
             )
-            if (alreadyPaired > 0) {
+            // M5: paired tags by name, not just a count.
+            if (pairedHere.isNotEmpty()) {
                 Spacer(Modifier.height(Spacing.xs))
-                Text(
-                    pluralStringResource(
-                        R.plurals.plural_tags_paired_here,
-                        alreadyPaired,
-                        alreadyPaired,
-                    ),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = palette.accentText,
-                )
+                pairedHere.forEach { tag ->
+                    Text(
+                        "• ${tag.name}",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = palette.accentText,
+                    )
+                }
             }
             Spacer(Modifier.height(Spacing.sm))
             if (candidates.isEmpty()) {
@@ -214,13 +243,7 @@ fun ModeEditorScreen(
                                 .clip(MaterialTheme.shapes.small)
                                 .toggleable(
                                     value = checked,
-                                    onValueChange = {
-                                        attachTagIds = if (checked) {
-                                            attachTagIds - tag.id
-                                        } else {
-                                            attachTagIds + tag.id
-                                        }
-                                    },
+                                    onValueChange = { vm.toggleAttach(tag.id) },
                                     role = Role.Checkbox,
                                 )
                                 .padding(horizontal = Spacing.sm, vertical = Spacing.xs),
@@ -263,10 +286,24 @@ fun ModeEditorScreen(
                 }
             }
 
+            if (saveError != null) {
+                Spacer(Modifier.height(Spacing.sm))
+                Text(
+                    saveError ?: "",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.error,
+                )
+                TextButton(onClick = {
+                    vm.clearSaveError()
+                    save()
+                }) {
+                    Text(stringResource(R.string.common_retry))
+                }
+            }
             Spacer(Modifier.height(Spacing.lg))
             Button(
                 onClick = ::save,
-                enabled = state.saveEnabled,
+                enabled = state.saveEnabled && !isSaving,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(Dimens.primaryButtonHeight),
@@ -274,7 +311,7 @@ fun ModeEditorScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
             ) {
                 Text(
-                    stringResource(R.string.common_save),
+                    if (isSaving) stringResource(R.string.common_saving) else stringResource(R.string.common_save),
                     style = MaterialTheme.typography.titleMedium,
                 )
             }

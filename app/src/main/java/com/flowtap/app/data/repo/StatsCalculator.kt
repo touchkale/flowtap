@@ -18,10 +18,18 @@ object StatsCalculator {
     const val MIN_STREAK_DAY_MS = 60_000L
 
     /**
-     * Sessions shorter than this are accidental taps: hidden from recents,
-     * history and totals (kept in the DB, streak rule unchanged).
+     * All completed sessions count toward totals/history. Previously sessions
+     * under five minutes were hidden, which looked like data loss (T1).
+     * Kept for reference; no longer used as a filter.
      */
     const val MIN_COUNTABLE_MS = 5 * 60_000L
+
+    /** Overlap of [startedAt, endedAt) with [rangeStart, rangeEnd), in ms. */
+    fun overlapMs(startedAt: Long, endedAt: Long, rangeStart: Long, rangeEnd: Long): Long {
+        val start = maxOf(startedAt, rangeStart)
+        val end = minOf(endedAt, rangeEnd)
+        return (end - start).coerceAtLeast(0L)
+    }
 
     fun computeWeek(list: List<SessionRecord>, now: Long = System.currentTimeMillis()): WeekStats {
         val weekStart = TimeUtil.startOfWeek(now)
@@ -29,9 +37,8 @@ object StatsCalculator {
             val dayStart = TimeUtil.addDays(weekStart, i)
             val dayEnd = TimeUtil.addDays(dayStart, 1)
             val total = list
-                .filter { it.startedAt >= dayStart && it.startedAt < dayEnd }
-                .filter { it.endedAt > 0 && it.durationMs >= MIN_COUNTABLE_MS }
-                .sumOf { it.durationMs }
+                .filter { it.endedAt > 0 }
+                .sumOf { overlapMs(it.startedAt, it.endedAt, dayStart, dayEnd) }
             DayTotal(dayStart = dayStart, totalMs = total)
         }
         return WeekStats(days = days, totalMs = days.sumOf { it.totalMs })
@@ -42,22 +49,24 @@ object StatsCalculator {
         now: Long = System.currentTimeMillis(),
     ): Long {
         val todayStart = TimeUtil.localDayStart(now)
-        return list.filter {
-            it.endedAt > 0 && it.durationMs >= MIN_COUNTABLE_MS && it.startedAt >= todayStart
-        }.sumOf { it.durationMs }
+        val tomorrowStart = TimeUtil.addDays(todayStart, 1)
+        return list.filter { it.endedAt > 0 }
+            .sumOf { overlapMs(it.startedAt, it.endedAt, todayStart, tomorrowStart) }
     }
 
-    /** Per-mode today totals (countable sessions only), for the Home selector. */
+    /** Per-mode today totals (all completed sessions), for the Home selector. */
     fun computeTodayTotalByMode(
         list: List<SessionRecord>,
         now: Long = System.currentTimeMillis(),
     ): Map<Long, Long> {
         val todayStart = TimeUtil.localDayStart(now)
-        return list.filter {
-            it.endedAt > 0 && it.durationMs >= MIN_COUNTABLE_MS && it.startedAt >= todayStart
-        }
+        val tomorrowStart = TimeUtil.addDays(todayStart, 1)
+        return list.filter { it.endedAt > 0 }
             .groupBy { it.modeId }
-            .mapValues { (_, sessions) -> sessions.sumOf { it.durationMs } }
+            .mapValues { (_, sessions) ->
+                sessions.sumOf { overlapMs(it.startedAt, it.endedAt, todayStart, tomorrowStart) }
+            }
+            .filterValues { it > 0 }
     }
 
     fun computeStreakDays(list: List<SessionRecord>, now: Long = System.currentTimeMillis()): Int {
@@ -81,9 +90,9 @@ object StatsCalculator {
         now: Long = System.currentTimeMillis(),
     ): Long {
         val start = TimeUtil.addDays(TimeUtil.localDayStart(now), -6)
-        val total = list.filter {
-            it.startedAt >= start && it.endedAt > 0 && it.durationMs >= MIN_COUNTABLE_MS
-        }.sumOf { it.durationMs }
+        val end = TimeUtil.addDays(TimeUtil.localDayStart(now), 1)
+        val total = list.filter { it.endedAt > 0 }
+            .sumOf { overlapMs(it.startedAt, it.endedAt, start, end) }
         return total / 7
     }
 }

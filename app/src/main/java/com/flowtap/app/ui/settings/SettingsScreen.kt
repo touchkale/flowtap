@@ -87,6 +87,11 @@ fun SettingsScreen(container: AppContainer) {
 
     // Permission/hardware rows refresh whenever returning from system screens.
     val refreshTick = rememberResumeTick()
+    androidx.compose.runtime.LaunchedEffect(refreshTick) {
+        // S5: granting policy access after a failed live application re-applies
+        // the requested session sound instead of leaving the phone mismatched.
+        com.flowtap.app.session.SessionManager.reconcileSound()
+    }
     val adminActive = remember(refreshTick) { Permissions.isDeviceAdminActive(context) }
     val blockingActive = remember(refreshTick) { Permissions.isAccessibilityEnabled(context) }
     val dndGranted = remember(refreshTick) { Permissions.isDndGranted(context) }
@@ -106,6 +111,15 @@ fun SettingsScreen(container: AppContainer) {
     }
     val showPaymentNudge = paymentInstalled.isNotEmpty() &&
         blockingMethod == BlockingMethod.FULL_POWER
+    val readiness = com.flowtap.app.session.BlockingReadiness(
+        method = blockingMethod,
+        accessibilityEnabled = blockingActive,
+        accessibilityServiceConnected = com.flowtap.app.blocking.FocusAccessibilityService.isConnected,
+        usageAccessGranted = usageGranted,
+        overlayGranted = overlayGranted,
+        sessionActive = sessionActive != null,
+        selectedAppCount = 0,
+    )
     val sidePadding = rememberAdaptiveSidePadding()
 
     // MainNav's Scaffold already applies the status-bar inset; only the
@@ -152,6 +166,24 @@ fun SettingsScreen(container: AppContainer) {
                 Spacer(Modifier.height(Spacing.cardGap))
             }
 
+            // One concise readiness card (S3): permission ≠ active enforcement.
+            SetupStatusCard(
+                ready = readiness.isReady,
+                missing = readiness.missingRequirement(),
+                conflict = readiness.hasEngineConflict,
+                sessionActive = sessionActive != null,
+                onFix = {
+                    when (readiness.missingRequirement()) {
+                        "accessibility" -> Permissions.enableAccessibility(context)
+                        "service-connection" -> Permissions.enableAccessibility(context)
+                        "usage-access" -> Permissions.openUsageAccessSettings(context)
+                        "overlay" -> Permissions.openOverlaySettings(context)
+                        else -> Unit
+                    }
+                },
+            )
+            Spacer(Modifier.height(Spacing.cardGap))
+
             SectionHeader(title = stringResource(R.string.settings_blocking_method))
             Spacer(Modifier.height(Spacing.headerGap))
             BlockingMethodCard(
@@ -162,6 +194,7 @@ fun SettingsScreen(container: AppContainer) {
             if (showPaymentNudge) {
                 Spacer(Modifier.height(Spacing.rowGap))
                 PaymentNudgeCard(
+                    enabled = !locked,
                     onSwitch = { vm.setBlockingMethod(BlockingMethod.COMPATIBILITY) },
                 )
             }
@@ -176,9 +209,9 @@ fun SettingsScreen(container: AppContainer) {
                     },
                     icon = Icons.Outlined.Info,
                     trailing = if (usageGranted) {
-                        stringResource(R.string.common_on)
+                        stringResource(R.string.settings_granted)
                     } else {
-                        stringResource(R.string.common_off)
+                        stringResource(R.string.settings_not_granted)
                     },
                     enabled = true,
                     active = usageGranted,
@@ -194,9 +227,9 @@ fun SettingsScreen(container: AppContainer) {
                     },
                     icon = Icons.Outlined.Info,
                     trailing = if (overlayGranted) {
-                        stringResource(R.string.common_on)
+                        stringResource(R.string.settings_granted)
                     } else {
-                        stringResource(R.string.common_off)
+                        stringResource(R.string.settings_not_granted)
                     },
                     enabled = true,
                     active = overlayGranted,
@@ -207,6 +240,8 @@ fun SettingsScreen(container: AppContainer) {
             Spacer(Modifier.height(Spacing.sectionGap))
             SectionHeader(title = stringResource(R.string.settings_protection))
             Spacer(Modifier.height(Spacing.headerGap))
+            // S1: every row keeps a predictable manage action — granting a
+            // permission never turns the row into a dead end.
             SettingRow(
                 title = stringResource(R.string.settings_uninstall_prot),
                 subtitle = if (adminActive) {
@@ -216,14 +251,15 @@ fun SettingsScreen(container: AppContainer) {
                 },
                 icon = if (adminActive) Icons.Outlined.Lock else Icons.Outlined.LockOpen,
                 trailing = if (adminActive) {
-                    stringResource(R.string.common_on)
+                    stringResource(R.string.settings_granted)
                 } else {
-                    stringResource(R.string.common_off)
+                    stringResource(R.string.settings_not_granted)
                 },
                 enabled = true,
                 active = adminActive,
                 onClick = {
                     if (!adminActive) Permissions.enableDeviceAdmin(context)
+                    else Permissions.openAppSettings(context)
                 },
             )
             Spacer(Modifier.height(Spacing.rowGap))
@@ -236,14 +272,16 @@ fun SettingsScreen(container: AppContainer) {
                 },
                 icon = Icons.Outlined.Block,
                 trailing = if (blockingActive) {
-                    stringResource(R.string.common_on)
+                    stringResource(R.string.settings_granted)
                 } else {
-                    stringResource(R.string.common_off)
+                    stringResource(R.string.settings_not_granted)
                 },
                 enabled = true,
                 active = blockingActive,
                 onClick = {
-                    if (!blockingActive) Permissions.enableAccessibility(context)
+                    // Always opens system settings so the user can manage or
+                    // revoke — never a no-op after grant (S1).
+                    Permissions.enableAccessibility(context)
                 },
             )
             Spacer(Modifier.height(Spacing.rowGap))
@@ -256,28 +294,34 @@ fun SettingsScreen(container: AppContainer) {
                 },
                 icon = Icons.Outlined.NotificationsOff,
                 trailing = if (dndGranted) {
-                    stringResource(R.string.common_on)
+                    stringResource(R.string.settings_granted)
                 } else {
-                    stringResource(R.string.common_off)
+                    stringResource(R.string.settings_not_granted)
                 },
                 enabled = true,
                 active = dndGranted,
                 onClick = {
-                    if (!dndGranted) Permissions.enableDnd(context)
+                    Permissions.enableDnd(context)
                 },
             )
-            if (!notifGranted) {
-                Spacer(Modifier.height(Spacing.rowGap))
-                SettingRow(
-                    title = stringResource(R.string.settings_notif),
-                    subtitle = stringResource(R.string.settings_notif_off),
-                    icon = Icons.Outlined.NotificationsActive,
-                    trailing = stringResource(R.string.common_off),
-                    enabled = true,
-                    active = false,
-                    onClick = { Permissions.openAppSettings(context) },
-                )
-            }
+            Spacer(Modifier.height(Spacing.rowGap))
+            SettingRow(
+                title = stringResource(R.string.settings_notif),
+                subtitle = if (notifGranted) {
+                    stringResource(R.string.settings_granted)
+                } else {
+                    stringResource(R.string.settings_notif_off)
+                },
+                icon = Icons.Outlined.NotificationsActive,
+                trailing = if (notifGranted) {
+                    stringResource(R.string.settings_granted)
+                } else {
+                    stringResource(R.string.settings_not_granted)
+                },
+                enabled = true,
+                active = notifGranted,
+                onClick = { Permissions.openAppSettings(context) },
+            )
 
             Spacer(Modifier.height(Spacing.sectionGap))
             SectionHeader(title = stringResource(R.string.settings_behavior))
@@ -325,7 +369,10 @@ fun SettingsScreen(container: AppContainer) {
             SectionHeader(title = stringResource(R.string.settings_about))
             Spacer(Modifier.height(Spacing.headerGap))
             SettingRow(
-                title = stringResource(R.string.settings_version_x, BuildConfig.VERSION_NAME),
+                title = stringResource(
+                    R.string.settings_version_x,
+                    com.flowtap.app.util.BuildInfo.label(),
+                ),
                 subtitle = stringResource(R.string.settings_version_sub),
                 icon = Icons.Outlined.Info,
                 trailing = null,
@@ -559,7 +606,13 @@ private fun BlockingMethodRow(
 }
 
 @Composable
-private fun PaymentNudgeCard(onSwitch: () -> Unit) {
+private fun SetupStatusCard(
+    ready: Boolean,
+    missing: String?,
+    conflict: Boolean,
+    sessionActive: Boolean,
+    onFix: () -> Unit,
+) {
     val palette = LocalFocusPalette.current
     Column(
         modifier = Modifier
@@ -567,6 +620,50 @@ private fun PaymentNudgeCard(onSwitch: () -> Unit) {
             .background(palette.card, MaterialTheme.shapes.medium)
             .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
             .padding(Spacing.cardPadding),
+        verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+    ) {
+        Text(
+            text = if (ready && !sessionActive) {
+                stringResource(R.string.settings_setup_ready)
+            } else {
+                stringResource(R.string.settings_setup_needed)
+            },
+            style = MaterialTheme.typography.titleMedium,
+            color = palette.textPrimary,
+        )
+        val sub = when {
+            conflict -> stringResource(R.string.settings_setup_conflict)
+            missing != null -> stringResource(R.string.settings_setup_missing_x, missing)
+            sessionActive && !ready -> stringResource(R.string.settings_setup_missing_x, "blocking")
+            else -> stringResource(R.string.settings_setup_ready_sub)
+        }
+        Text(
+            text = sub,
+            style = MaterialTheme.typography.labelLarge,
+            color = palette.textSecondary,
+        )
+        if (missing != null || conflict || (sessionActive && !ready)) {
+            Spacer(Modifier.height(Spacing.xs))
+            androidx.compose.material3.Button(
+                onClick = onFix,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.settings_setup_fix))
+            }
+        }
+    }
+}
+
+@Composable
+private fun PaymentNudgeCard(enabled: Boolean, onSwitch: () -> Unit) {
+    val palette = LocalFocusPalette.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(palette.card, MaterialTheme.shapes.medium)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
+            .padding(Spacing.cardPadding)
+            .alpha(if (enabled) 1f else 0.6f),
         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
         Text(
@@ -582,6 +679,7 @@ private fun PaymentNudgeCard(onSwitch: () -> Unit) {
         Spacer(Modifier.height(Spacing.xs))
         androidx.compose.material3.Button(
             onClick = onSwitch,
+            enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(stringResource(R.string.settings_payment_action))

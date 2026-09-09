@@ -47,6 +47,7 @@ object Notifications {
     fun sessionNotification(
         context: Context,
         snap: ActiveSessionSnapshot,
+        hardcore: Boolean = false,
     ): Notification {
         val openIntent = PendingIntent.getActivity(
             context,
@@ -65,7 +66,8 @@ object Notifications {
             .setWhen(snap.startedAtEpoch)
             .setUsesChronometer(true)
 
-        if (!snap.strictMode) {
+        // S4: one lock policy — strict or Hardcore hides the End action everywhere.
+        if (!com.flowtap.app.session.SessionPolicy.isEndLocked(snap, hardcore)) {
             val endIntent = PendingIntent.getActivity(
                 context,
                 1,

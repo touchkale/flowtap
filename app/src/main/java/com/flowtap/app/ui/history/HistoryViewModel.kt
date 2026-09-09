@@ -76,8 +76,7 @@ class HistoryViewModel(
     val sessions: StateFlow<List<SessionRecord>> = repo.sessions
         .map { list ->
             list.filter {
-                it.endedAt > 0 && // F4: never show in-progress rows
-                    it.durationMs >= com.flowtap.app.data.repo.StatsCalculator.MIN_COUNTABLE_MS
+                it.endedAt > 0 // F4: never show in-progress rows; all completed sessions shown (T1)
             }
         } // F4: never show in-progress rows
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

@@ -117,9 +117,10 @@ object SessionManager {
     }
 
     /**
-     * NFC tap entry point. Same tag ends its session; a different tag switches
-     * modes (unless the running mode is strict, in which case the tap is ignored
-     * and a reminder notification is shown).
+     * NFC tap entry point. Strict sessions end only with the starting tag
+     * (N1); flexible sessions end on the same mode. A different mode switches
+     * unless the running session is strict/locked, in which case the tap is
+     * ignored and a reminder notification is shown.
      */
     fun handleTagTap(mode: FocusMode, tag: FocusTag?) {
         val now = System.currentTimeMillis()
@@ -132,7 +133,17 @@ object SessionManager {
                 val cur = _active.value
                 when {
                     cur == null -> startSessionInternal(mode, tag)
-                    cur.modeId == mode.id -> endSessionInternal(EndReason.TAP_END, cur)
+                    cur.modeId == mode.id -> {
+                        if (cur.strictMode) {
+                            if (SessionPolicy.strictTapEndsSession(cur, mode, tag)) {
+                                endSessionInternal(EndReason.TAP_END, cur)
+                            } else {
+                                Notifications.showStrictBlock(app, cur)
+                            }
+                        } else {
+                            endSessionInternal(EndReason.TAP_END, cur)
+                        }
+                    }
                     cur.strictMode -> Notifications.showStrictBlock(app, cur)
                     else -> {
                         endSessionInternal(EndReason.SWITCHED, cur)
@@ -175,15 +186,15 @@ object SessionManager {
     }
 
     /** Applies [mode] fresh (no teardown): DND needs master + policy access. */
-    private suspend fun applyNotification(mode: NotificationMode) {
-        when (mode) {
+    private suspend fun applyNotification(mode: NotificationMode): SoundApplyResult {
+        return when (mode) {
             NotificationMode.DND -> {
-                if (!dnd.isPolicyAccessGranted()) return
-                if (!prefs.dndMasterEnabled.first()) return
+                if (!dnd.isPolicyAccessGranted()) return SoundApplyResult.NOT_GRANTED
+                if (!prefs.dndMasterEnabled.first()) return SoundApplyResult.DISABLED_BY_MASTER
                 dnd.enableDnd()
             }
             NotificationMode.SILENT -> ringer.silence()
-            NotificationMode.NONE -> Unit
+            NotificationMode.NONE -> SoundApplyResult.APPLIED
         }
     }
 
@@ -216,12 +227,34 @@ object SessionManager {
         }
     }
 
-    /** Manual end from the app UI / notification action. */
+    /** Manual end from the app UI / notification action. Enforces the shared lock policy (S4). */
     fun endSession(reason: EndReason = EndReason.IN_APP) {
         scope.launch {
             mutex.withLock {
                 loadPersistedLocked()
-                endSessionInternal(reason, _active.value ?: return@withLock)
+                val cur = _active.value ?: return@withLock
+                val hardcore = prefs.hardcoreMode.first()
+                if (!SessionPolicy.canEnd(reason, cur.strictMode, hardcore)) return@withLock
+                endSessionInternal(reason, cur)
+            }
+        }
+    }
+
+    /**
+     * Re-applies the requested sound after a permission return or startup,
+     * when a failed/late grant left the phone behaving differently from the
+     * mode (S5). Safe to call repeatedly; no-ops without an active session.
+     */
+    fun reconcileSound() {
+        scope.launch {
+            mutex.withLock {
+                loadPersistedLocked()
+                val cur = _active.value ?: return@withLock
+                if (cur.notificationMode == NotificationMode.DND) {
+                    if (prefs.dndMasterEnabled.first() && dnd.isPolicyAccessGranted()) {
+                        dnd.enableDnd()
+                    }
+                }
             }
         }
     }
@@ -308,28 +341,38 @@ object SessionManager {
      * alive with goAsync() until this completes.
      */
     suspend fun reconcileOnBoot(container: AppContainer) {
-        val p = container.settingsDataStore
-        val r = container.focusRepository
-        val snap = p.activeSession.first() ?: return
-        val endedAt = System.currentTimeMillis()
-        r.updateSession(
-            SessionRecord(
-                id = snap.sessionId,
-                modeId = snap.modeId,
-                tagId = snap.tagId,
-                startedAt = snap.startedAtEpoch,
-                endedAt = endedAt,
-                durationMs = (endedAt - snap.startedAtEpoch).coerceAtLeast(0L),
-                endReason = EndReason.REBOOT,
+        mutex.withLock {
+            val p = container.settingsDataStore
+            val r = container.focusRepository
+            val snap = p.activeSession.first() ?: run {
+                _active.value = null
+                autoEndJob?.cancel()
+                autoEndJob = null
+                return
+            }
+            val endedAt = System.currentTimeMillis()
+            r.updateSession(
+                SessionRecord(
+                    id = snap.sessionId,
+                    modeId = snap.modeId,
+                    tagId = snap.tagId,
+                    startedAt = snap.startedAtEpoch,
+                    endedAt = endedAt,
+                    durationMs = (endedAt - snap.startedAtEpoch).coerceAtLeast(0L),
+                    endReason = EndReason.REBOOT,
+                )
             )
-        )
-        if (snap.notificationMode == NotificationMode.DND) {
-            DndController(container.appContext, p).restoreDnd()
+            if (snap.notificationMode == NotificationMode.DND) {
+                DndController(container.appContext, p).restoreDnd()
+            }
+            if (snap.notificationMode == NotificationMode.SILENT) {
+                RingerController(container.appContext, p).restore()
+            }
+            p.clearActiveSession()
+            _active.value = null
+            autoEndJob?.cancel()
+            autoEndJob = null
         }
-        if (snap.notificationMode == NotificationMode.SILENT) {
-            RingerController(container.appContext, p).restore()
-        }
-        p.clearActiveSession()
     }
 
     private fun startForegroundService() {

@@ -492,6 +492,8 @@ private fun ActiveSessionView(
     modeGoalMs: Long,
 ) {
     val palette = LocalFocusPalette.current
+    // H1: the tick state drives the display — elapsedMs is read below so each
+    // one-second write invalidates composition and the timer visibly advances.
     var elapsedMs by remember(snap.sessionId) { mutableLongStateOf(snap.elapsedMs()) }
     LaunchedEffect(snap.sessionId) {
         while (true) {
@@ -501,13 +503,14 @@ private fun ActiveSessionView(
     }
 
     // Hardcore mode: the session cannot be ended from the app at all.
-    val endLocked = snap.strictMode || hardcore
+    val endLocked = com.flowtap.app.session.SessionPolicy.isEndLocked(snap, hardcore)
 
     // Active timer shows THIS mode's today total (cumulative, live-ticking),
     // not all modes combined. modeTodayBaseMs counts completed sessions for
     // this mode only — the running one isn't persisted until it ends.
-    // Overnight sessions are capped at today's slice via the session start.
-    val nowMs = System.currentTimeMillis()
+    // Overnight sessions are capped at today's slice. nowMs is derived from
+    // the observed tick so the display is driven by that clock (H1).
+    val nowMs = snap.startedAtEpoch + elapsedMs
     val elapsedToday = (nowMs - maxOf(snap.startedAtEpoch, TimeUtil.localDayStart(nowMs)))
         .coerceAtLeast(0L)
     val dayTotal = modeTodayBaseMs + elapsedToday
@@ -568,7 +571,8 @@ private fun ActiveSessionView(
                     textAlign = TextAlign.Center,
                 )
                 Text(
-                    stringResource(R.string.home_todays_total),
+                    // H1: session elapsed is distinct from today's cumulative total.
+                    TimeUtil.formatClockTime(elapsedMs) + " • " + stringResource(R.string.home_todays_total),
                     style = MaterialTheme.typography.labelLarge,
                     color = palette.textTertiary,
                     textAlign = TextAlign.Center,

@@ -11,6 +11,8 @@
     <string name="common_nfc_cd">NFC</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_save">Save</string>
+    <string name="common_saving">Saving…</string>
+    <string name="common_retry">Retry</string>
     <string name="common_delete">Delete</string>
     <string name="common_close">Close</string>
     <string name="common_back">Back</string>
@@ -40,8 +42,9 @@
     <string name="home_goal_reached">Goal reached</string>
     <string name="home_percent_of_goal">%1$d%% of goal</string>
     <string name="home_goal_complete">Daily goal complete — nice work.</string>
-    <string name="home_start">Tap NFC tag to start</string>
-    <string name="home_strict_only_hint">All modes are strict — start with a tag</string>
+    <string name="home_start">Start focus</string>
+    <string name="home_start_nfc_hint">Or tap your NFC tag to start</string>
+    <string name="home_strict_only_hint">This mode needs its tag to start</string>
     <string name="home_strict_on">Strict mode on</string>
     <string name="home_strict_off">Strict mode off</string>
     <string name="home_hardcore">Hardcore mode</string>
@@ -64,7 +67,7 @@
     <string name="home_mode_dropdown_cd">Choose mode to preview</string>
     <string name="home_goal_remaining_x">Goal %1$s · %2$s left</string>
     <string name="home_silent">Silent</string>
-    <string name="home_notif_off">Notifications off</string>
+    <string name="home_notif_off">Phone unchanged</string>
 
     <!-- Tags & modes -->
     <string name="tags_title">Tags</string>
@@ -108,12 +111,15 @@
     <string name="modes_auto_end">Auto-end timer</string>
     <string name="modes_auto_off">Off</string>
     <string name="modes_auto_custom_hint">Minutes (5–720)</string>
-    <string name="modes_block_mode">Enforcement</string>
-    <string name="modes_blocklist">Blocklist</string>
-    <string name="modes_allowlist">Allowlist</string>
+    <string name="modes_block_mode">Which apps are blocked</string>
+    <string name="modes_blocklist">Block selected apps</string>
+    <string name="modes_allowlist">Allow only selected apps</string>
     <string name="modes_allowed_apps">Allowed apps</string>
     <string name="modes_launch_app">Launch app on start</string>
     <string name="modes_launch_none">None</string>
+    <string name="modes_loading">Loading…</string>
+    <string name="modes_not_found">Mode not found</string>
+    <string name="modes_next_session_note">A session is running — changes apply to your next session.</string>
     <string name="modes_launch_search">Search apps</string>
     <string name="modes_chip_allowlist_x">%1$d allowed</string>
     <string name="modes_chip_auto_x">Auto-end %1$s</string>
@@ -138,8 +144,8 @@
     <string name="modes_chip_silent">Silent</string>
     <string name="modes_chip_none">None</string>
     <string name="modes_advanced">Advanced settings</string>
-    <string name="modes_notif_title">Notifications during sessions</string>
-    <string name="modes_notif_none">None</string>
+    <string name="modes_notif_title">Sound during sessions</string>
+    <string name="modes_notif_none">Keep unchanged</string>
     <string name="modes_notif_none_sub">Phone behaves normally</string>
     <string name="modes_notif_silent">Silent</string>
     <string name="modes_notif_silent_sub">Ringer goes silent, restored after</string>
@@ -175,12 +181,20 @@
     <string name="settings_locked_2">End the session with your NFC tag to change them.</string>
     <string name="settings_blocking_method">Blocking method</string>
     <string name="settings_blocking_full">Full power (recommended)</string>
-    <string name="settings_blocking_full_sub">Instant. Breaks banking apps.</string>
+    <string name="settings_blocking_full_sub">Instant blocking. Some banking apps may refuse to run while it is on.</string>
     <string name="settings_blocking_compat">Compatibility</string>
-    <string name="settings_blocking_compat_sub">~2s delay. Banking apps work.</string>
+    <string name="settings_blocking_compat_sub">~2s delay. Works without accessibility, easier on banking apps.</string>
     <string name="settings_payment_title">Banking apps detected</string>
-    <string name="settings_payment_sub">They need compatibility mode.</string>
+    <string name="settings_payment_sub">If a banking app refuses to open, try compatibility mode and turn accessibility off for FlowTap.</string>
     <string name="settings_payment_action">Switch to compatibility</string>
+    <string name="settings_setup_ready">Ready</string>
+    <string name="settings_setup_needed">Action needed</string>
+    <string name="settings_setup_fix">Fix setup</string>
+    <string name="settings_setup_ready_sub">Blocking is ready for the selected method.</string>
+    <string name="settings_setup_missing_x">Missing: %1$s. Tap Fix setup.</string>
+    <string name="settings_setup_conflict">Compatibility selected but accessibility is still on — both could block. Turn accessibility off for banking.</string>
+    <string name="settings_granted">Granted</string>
+    <string name="settings_not_granted">Not granted</string>
     <string name="settings_perm_usage">Usage access</string>
     <string name="settings_perm_usage_on">Compatibility can detect apps</string>
     <string name="settings_perm_usage_off">Needed to see the foreground app</string>
@@ -195,9 +209,9 @@
     <string name="settings_app_blocking">App blocking</string>
     <string name="settings_app_blocking_on">Blocked apps return home</string>
     <string name="settings_app_blocking_off">Turn on to block apps</string>
-    <string name="settings_dnd">Do Not Disturb</string>
-    <string name="settings_dnd_on">Silence during sessions</string>
-    <string name="settings_dnd_off">Silence during sessions</string>
+    <string name="settings_dnd">Do Not Disturb access</string>
+    <string name="settings_dnd_on">Permission granted — DND still follows each mode and the master switch</string>
+    <string name="settings_dnd_off">Needed to silence during sessions</string>
     <string name="settings_notif">Session notifications</string>
     <string name="settings_notif_off">Tap to allow alerts.</string>
     <string name="settings_behavior">Behavior</string>

@@ -19,9 +19,9 @@ class DndController(
 
     fun isPolicyAccessGranted(): Boolean = nm.isNotificationPolicyAccessGranted
 
-    suspend fun enableDnd() {
-        if (!isPolicyAccessGranted()) return
-        runCatching {
+    suspend fun enableDnd(): SoundApplyResult {
+        if (!isPolicyAccessGranted()) return SoundApplyResult.NOT_GRANTED
+        return try {
             val current = nm.currentInterruptionFilter
             // F8: never persist UNKNOWN as the value to restore later.
             val toStore = if (current == NotificationManager.INTERRUPTION_FILTER_UNKNOWN) {
@@ -32,16 +32,23 @@ class DndController(
             prefs.savePriorDndFilter(toStore)
             prefs.setPendingDndRestore(true)
             nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
+            SoundApplyResult.APPLIED
+        } catch (e: Exception) {
+            // Preserve restore evidence: pending flag stays until a confirmed restore.
+            SoundApplyResult.FAILED
         }
     }
 
-    suspend fun restoreDnd() {
-        if (!prefs.pendingDndRestore.first()) return
+    suspend fun restoreDnd(): Boolean {
+        if (!prefs.pendingDndRestore.first()) return true
         // previous filter is stored by enableDnd; read it if present, else ALL
         val priorFilter = getStoredPriorFilter() ?: NotificationManager.INTERRUPTION_FILTER_ALL
-        runCatching { nm.setInterruptionFilter(priorFilter) }
-        prefs.setPendingDndRestore(false)
-        prefs.clearPriorDndFilter()
+        val ok = runCatching { nm.setInterruptionFilter(priorFilter) }.isSuccess
+        if (ok) {
+            prefs.setPendingDndRestore(false)
+            prefs.clearPriorDndFilter()
+        }
+        return ok
     }
 
     private suspend fun getStoredPriorFilter(): Int? =

@@ -70,12 +70,17 @@ data class InstalledApp(val pkg: String, val label: String)
 fun loadLaunchableApps(context: Context): List<InstalledApp> {
     val pm = context.packageManager
     val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-    return pm.queryIntentActivities(intent, 0)
+    val raw = runCatching { pm.queryIntentActivities(intent, 0) }.getOrDefault(emptyList())
         .mapNotNull { ri ->
-            val pkg = ri.activityInfo.packageName
+            val pkg = runCatching { ri.activityInfo.packageName }.getOrNull()
+                ?: return@mapNotNull null
             if (pkg == context.packageName) return@mapNotNull null
-            InstalledApp(pkg, ri.loadLabel(pm).toString())
+            val label = runCatching { ri.loadLabel(pm).toString() }.getOrDefault(pkg)
+            InstalledApp(pkg, label)
         }
+    // Dedupe by package (M3): multiple launcher activities must not produce
+    // duplicate Compose keys.
+    return AppCatalog.deduplicate(raw)
 }
 
 fun formatAutoEnd(minutes: Int): String = when {
@@ -293,8 +298,15 @@ fun ModeEditorForm(
     var appSearch by remember { mutableStateOf("") }
     var launchSearch by remember { mutableStateOf("") }
     var apps by remember { mutableStateOf<List<InstalledApp>>(emptyList()) }
+    var appsError by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) { apps = loadLaunchableApps(context) }
+    // M3: shared catalog, off-main, deduplicated by package.
+    LaunchedEffect(Unit) {
+        apps = runCatching { AppCatalog.load(context) }.getOrElse {
+            appsError = true
+            emptyList()
+        }
+    }
 
     val sortedApps = remember(apps, appSearch) {
         val q = appSearch.trim().lowercase()

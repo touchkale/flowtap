@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [ModeEntity::class, TagEntity::class, SessionEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -62,9 +62,23 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * v5: UID uniqueness + dedup. Tags with duplicate uidHex are collapsed
+         * to the oldest row before the unique index is enforced (N2).
+         */
+        val MIGRATION_4_5 = object : androidx.room.migration.Migration(4, 5) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL(
+                    "DELETE FROM tags WHERE id NOT IN " +
+                        "(SELECT MIN(id) FROM tags GROUP BY uidHex)"
+                )
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_tags_uidHex ON tags(uidHex)")
+            }
+        }
+
         fun build(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "flowtap.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
     }
 }

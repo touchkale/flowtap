@@ -36,9 +36,23 @@ class NfcRouterActivity : ComponentActivity() {
         app.appScope.launch {
             val repo = app.container.focusRepository
             val tag = uid?.let { repo.getTagByUid(it) }
+            // N2: a paired tag is an ending credential. An unknown/deleted UID
+            // must pair first — never trust the payload mode ID alone, since a
+            // deleted binding would otherwise keep starting the surviving mode.
+            if (uid != null && tag == null) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@NfcRouterActivity,
+                        getString(R.string.nfc_unknown_tag),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                    finish()
+                }
+                return@launch
+            }
             val mode = when {
                 tag != null -> repo.getMode(tag.modeId)
-                modeIdFromPayload != null -> repo.getMode(modeIdFromPayload)
+                uid == null && modeIdFromPayload != null -> repo.getMode(modeIdFromPayload)
                 else -> null
             }
 

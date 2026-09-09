@@ -676,7 +676,9 @@ private fun BlockedAppsStep(vm: OnboardingViewModel, onDone: () -> Unit) {
     var apps by remember { mutableStateOf<List<InstalledApp>>(emptyList()) }
 
     LaunchedEffect(Unit) {
-        apps = loadLaunchableApps(context)
+        apps = runCatching { com.flowtap.app.ui.modes.AppCatalog.load(context) }
+            .getOrDefault(emptyList())
+            .map { InstalledApp(it.pkg, it.label) }
     }
 
     val filtered = apps
@@ -831,12 +833,20 @@ private fun AppRow(app: InstalledApp, checked: Boolean, onToggle: () -> Unit) {
 }
 
 private fun loadLaunchableApps(context: Context): List<InstalledApp> {
-    val pm = context.packageManager
-    val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-    return pm.queryIntentActivities(intent, 0)
-        .mapNotNull { ri ->
-            val pkg = ri.activityInfo.packageName
-            if (pkg == context.packageName) return@mapNotNull null
-            InstalledApp(pkg, ri.loadLabel(pm).toString())
-        }
+    // Shared catalog: deduped by package (M3). Kept for binary compat; new
+    // code should call AppCatalog.load off-main.
+    val raw = run {
+        val pm = context.packageManager
+        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        runCatching { pm.queryIntentActivities(intent, 0) }.getOrDefault(emptyList())
+            .mapNotNull { ri ->
+                val pkg = runCatching { ri.activityInfo.packageName }.getOrNull()
+                    ?: return@mapNotNull null
+                if (pkg == context.packageName) return@mapNotNull null
+                val label = runCatching { ri.loadLabel(pm).toString() }.getOrDefault(pkg)
+                com.flowtap.app.ui.modes.InstalledApp(pkg, label)
+            }
+    }
+    return com.flowtap.app.ui.modes.AppCatalog.deduplicate(raw)
+        .map { InstalledApp(it.pkg, it.label) }
 }

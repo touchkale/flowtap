@@ -31,7 +31,10 @@ data class ModeEntity(
 )
 
 /** A physical NFC tag bound to a mode. uidHex uniquely identifies the sticker. */
-@Entity(tableName = "tags")
+@Entity(
+    tableName = "tags",
+    indices = [androidx.room.Index(value = ["uidHex"], unique = true)],
+)
 data class TagEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,

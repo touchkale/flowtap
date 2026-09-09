@@ -108,10 +108,11 @@ class StatsCalculatorTest {
     @Test
     fun computeAverageDaily_trailingSevenDays() {
         val now = day(Calendar.SEPTEMBER, 2, 20)
+        val todayMorning = day(Calendar.SEPTEMBER, 2, 9)
         val sixDaysAgo = day(Calendar.AUGUST, 27, 9)
         val tenDaysAgo = day(Calendar.AUGUST, 23, 9)
         val list = listOf(
-            session(now, 7 * 60 * 60_000L), // 7h today
+            session(todayMorning, 7 * 60 * 60_000L), // 7h today, no midnight crossing
             session(sixDaysAgo, 7 * 60 * 60_000L), // 7h six days ago
             session(tenDaysAgo, 70 * 60 * 60_000L), // outside window — excluded
         )

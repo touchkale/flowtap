@@ -33,10 +33,12 @@ class SettingsViewModel(private val settings: SettingsDataStore) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
     fun setHardcore(enabled: Boolean) {
+        com.flowtap.app.session.EngineState.hardcore = enabled
         viewModelScope.launch { settings.setHardcoreMode(enabled) }
     }
 
     fun setBlockingMethod(method: com.flowtap.app.data.prefs.BlockingMethod) {
+        com.flowtap.app.session.EngineState.blockingMethod = method
         viewModelScope.launch { settings.setBlockingMethod(method) }
     }
 

@@ -173,17 +173,19 @@ class BlockOverlayController(private val service: AccessibilityService) {
 
     private fun render(current: ActiveSessionSnapshot) {
         resetHold()
-        val strict = current.strictMode
+        // S4: one lock policy — strict or Hardcore. Emergency exit always stays.
+        val hardcore = com.flowtap.app.session.EngineState.hardcore
+        val locked = com.flowtap.app.session.SessionPolicy.isEndLocked(current, hardcore)
         titleText?.text = service.getString(R.string.overlay_active_x, current.modeName)
-        hintText?.text = if (strict) {
+        hintText?.text = if (current.strictMode) {
             service.getString(R.string.overlay_strict_hint, current.tagName ?: "NFC")
         } else {
             service.getString(R.string.overlay_flex_hint)
         }
-        // Strict sessions hide the instant End button but ALWAYS show the
+        // Locked sessions hide the instant End button but ALWAYS show the
         // hold-to-end emergency exit — the overlay can never trap the user.
-        endButton?.visibility = if (strict) View.GONE else View.VISIBLE
-        holdContainer?.visibility = if (strict) View.VISIBLE else View.GONE
+        endButton?.visibility = if (locked) View.GONE else View.VISIBLE
+        holdContainer?.visibility = if (locked) View.VISIBLE else View.GONE
         timerText?.text = TimeUtil.formatClockTime(current.elapsedMs())
     }
 

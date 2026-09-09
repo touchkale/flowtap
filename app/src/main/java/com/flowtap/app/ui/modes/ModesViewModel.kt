@@ -35,27 +35,51 @@ class ModesViewModel(private val repo: com.flowtap.app.data.repo.FocusRepository
         viewModelScope.launch { repo.updateMode(mode) }
     }
 
+    private val saveMutex = kotlinx.coroutines.sync.Mutex()
+    private val _isSaving = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val isSaving: StateFlow<Boolean> = _isSaving
+
+    private val _saveError = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    val saveError: StateFlow<String?> = _saveError
+
     /**
      * Persists the mode (insert for a new one, update otherwise) and then
      * re-binds every tag in [attachTagIds] to it — the editor's quick "tap a
-     * tag to pair it with this mode". [onComplete] runs afterwards so the
-     * caller can navigate back knowing both writes landed.
+     * tag to pair it with this mode". Single-flight (M2): concurrent saves
+     * are serialized and [onComplete] runs only after the committed
+     * transaction, so double-taps cannot create duplicates.
      */
     fun saveModeWithTags(mode: FocusMode, attachTagIds: Set<Long>, onComplete: () -> Unit) {
         viewModelScope.launch {
-            val id = if (mode.id == 0L) {
-                repo.addMode(mode)
-            } else {
-                repo.updateMode(mode)
-                mode.id
-            }
-            if (attachTagIds.isNotEmpty()) {
-                repo.tags.first().filter { it.id in attachTagIds }.forEach { tag ->
-                    if (tag.modeId != id) repo.updateTag(tag.copy(modeId = id))
+            // Serialize saves; ignore re-entrant taps while one is in flight.
+            if (!saveMutex.tryLock()) return@launch
+            try {
+                _isSaving.value = true
+                _saveError.value = null
+                // Protect moving the active session's ending tag (M4).
+                val activeModeId = com.flowtap.app.session.SessionManager.current?.modeId
+                val activeTagId = com.flowtap.app.session.SessionManager.current?.tagId
+                if (activeModeId != null && mode.id == activeModeId && activeTagId != null &&
+                    activeTagId in attachTagIds
+                ) {
+                    // Moving the ending tag mid-session is deferred: save the
+                    // mode now, leave the active tag where it is.
+                    repo.saveModeWithTags(mode, attachTagIds - activeTagId)
+                } else {
+                    repo.saveModeWithTags(mode, attachTagIds)
                 }
+                onComplete()
+            } catch (e: Exception) {
+                _saveError.value = e.message ?: "Save failed"
+            } finally {
+                _isSaving.value = false
+                saveMutex.unlock()
             }
-            onComplete()
         }
+    }
+
+    fun clearSaveError() {
+        _saveError.value = null
     }
 
     fun duplicateMode(mode: FocusMode) {

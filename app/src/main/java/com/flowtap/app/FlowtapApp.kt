@@ -22,5 +22,15 @@ class FlowtapApp : Application() {
         SessionManager.init(container)
         // F1: guarantee the default "Deep Work" mode exists on first launch.
         appScope.launch { container.focusRepository.ensureSeeded() }
+        // Sync synchronous engine caches for services/overlays (S2/S4).
+        appScope.launch {
+            kotlinx.coroutines.flow.combine(
+                container.settingsDataStore.blockingMethod,
+                container.settingsDataStore.hardcoreMode,
+            ) { method, hardcore ->
+                com.flowtap.app.session.EngineState.blockingMethod = method
+                com.flowtap.app.session.EngineState.hardcore = hardcore
+            }.collect {}
+        }
     }
 }

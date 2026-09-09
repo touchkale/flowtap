@@ -59,17 +59,20 @@ class BlockOverlayActivity : ComponentActivity() {
                 )
             val darkTheme = rememberDarkTheme(themeMode)
             com.flowtap.app.ui.util.SystemBarAppearance(darkTheme)
+            val hardcore by app.container.settingsDataStore.hardcoreMode
+                .collectAsStateWithLifecycle(initialValue = false)
             FlowtapTheme(active = true, darkTheme = darkTheme) {
                 if (current != null) {
+                    val locked = com.flowtap.app.session.SessionPolicy.isEndLocked(current, hardcore)
                     BlockOverlayContent(
                         snap = current,
                         onOpenTimer = { openTimer() },
-                        onEndSession = if (current.strictMode) {
+                        onEndSession = if (locked) {
                             null
                         } else {
                             { SessionManager.endSession(EndReason.IN_APP) }
                         },
-                        onEmergencyEnd = if (current.strictMode) {
+                        onEmergencyEnd = if (current.strictMode || hardcore) {
                             { SessionManager.endSession(EndReason.EMERGENCY) }
                         } else {
                             null

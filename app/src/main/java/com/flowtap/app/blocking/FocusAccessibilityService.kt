@@ -28,11 +28,6 @@ class FocusAccessibilityService : AccessibilityService() {
 
     /** Launcher + critical system surfaces are never blocked, even in allowlist mode. */
     private fun isExempt(pkg: String): Boolean {
-        if (pkg == packageName) return true
-        if (pkg == "com.android.systemui" || pkg == "android") return true
-        if (pkg == "com.android.server.telecom" || pkg == "com.android.phone" ||
-            pkg == "com.android.incallui"
-        ) return true
         val homes = homePackages ?: run {
             val resolved = runCatching {
                 val home = android.content.Intent(android.content.Intent.ACTION_MAIN)
@@ -43,17 +38,27 @@ class FocusAccessibilityService : AccessibilityService() {
             homePackages = resolved
             resolved
         }
-        return pkg in homes
+        return BlockExemptions.isExempt(pkg, packageName, homes)
     }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        isConnected = true
         overlay = BlockOverlayController(this)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
         if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+
+        // S2: only the selected engine enforces. When the user chose
+        // compatibility, accessibility stays silent even if still enabled.
+        if (com.flowtap.app.session.EngineState.blockingMethod !=
+            com.flowtap.app.data.prefs.BlockingMethod.FULL_POWER
+        ) {
+            overlay?.dismiss()
+            return
+        }
 
         val snap = SessionManager.current
         if (snap == null) {
@@ -117,6 +122,7 @@ class FocusAccessibilityService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     override fun onDestroy() {
+        isConnected = false
         overlay?.destroy()
         overlay = null
         super.onDestroy()
@@ -125,5 +131,10 @@ class FocusAccessibilityService : AccessibilityService() {
     companion object {
         private const val BLOCK_DEBOUNCE_MS = 1500L
         private const val NAV_DISMISS_GRACE_MS = 1500L
+
+        /** Actual service connection, distinct from the settings permission flag (S3). */
+        @Volatile
+        var isConnected: Boolean = false
+            private set
     }
 }
