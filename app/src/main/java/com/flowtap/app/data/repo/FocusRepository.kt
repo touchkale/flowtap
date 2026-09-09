@@ -45,6 +45,8 @@ class FocusRepository(
 
     suspend fun getMode(id: Long): FocusMode? = modeDao.getById(id)?.toDomain()
 
+    suspend fun modeCount(): Int = modeDao.count()
+
     suspend fun getTagByUid(uidHex: String): FocusTag? = tagDao.getByUid(uidHex)?.toDomain()
 
     suspend fun addMode(mode: FocusMode): Long = modeDao.insert(mode.toEntity())

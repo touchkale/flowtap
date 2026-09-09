@@ -51,6 +51,7 @@ class SettingsDataStore(private val context: Context) {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val BLOCKING_METHOD = stringPreferencesKey("blocking_method")
         val ACTIVE_SESSION_JSON = stringPreferencesKey("active_session_json")
+        val SEEDED_ONCE = booleanPreferencesKey("seeded_once")
         val PRIOR_DND_FILTER = intPreferencesKey("prior_dnd_filter")
         val PENDING_DND_RESTORE = booleanPreferencesKey("pending_dnd_restore")
         val PRIOR_RINGER_MODE = intPreferencesKey("prior_ringer_mode")
@@ -75,6 +76,17 @@ class SettingsDataStore(private val context: Context) {
 
     val onboardingDone: Flow<Boolean> = context.settingsDataStore.data
         .map { it[Keys.ONBOARDING_DONE] ?: false }
+
+    /**
+     * One-time seed marker (D3): the default mode is created once ever. If the
+     * user intentionally deletes every mode, relaunch must not recreate it.
+     */
+    val seededOnce: Flow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.SEEDED_ONCE] ?: false }
+
+    suspend fun setSeededOnce() {
+        context.settingsDataStore.edit { it[Keys.SEEDED_ONCE] = true }
+    }
 
     val keepScreenAwake: Flow<Boolean> = context.settingsDataStore.data
         .map { it[Keys.KEEP_SCREEN_AWAKE] ?: false }

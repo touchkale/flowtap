@@ -101,9 +101,9 @@ private val AUTO_PRESETS = listOf(15, 25, 30, 45, 60, 90)
 /** Daily-goal presets in minutes; the last chip opens the custom dialog. */
 private val GOAL_PRESETS = listOf(60, 120, 240, 360)
 
-/** One-line summary for a mode card: apps · ending · sound · goal · tags. */
+/** One summary line for a mode card: apps · ending · sound · goal · tags (+ options). */
 @Composable
-private fun modeSummaryLine(mode: FocusMode, tagCount: Int): String {
+private fun modeSummaryLine(mode: FocusMode, tagCount: Int, launchLabel: String?): String {
     val apps = if (mode.allowlistOnly) {
         stringResource(R.string.modes_chip_allowlist_x, mode.allowedApps.size)
     } else {
@@ -121,7 +121,11 @@ private fun modeSummaryLine(mode: FocusMode, tagCount: Int): String {
     )
     val goal = stringResource(R.string.modes_chip_goal_x, formatGoalShort(mode.dailyGoalMinutes))
     val tags = pluralStringResource(R.plurals.plural_mode_tags, tagCount, tagCount)
-    return listOf(apps, ending, sound, goal, tags).joinToString(" · ")
+    val parts = mutableListOf(apps, ending, sound, goal, tags)
+    mode.autoEndMinutes?.let { parts += stringResource(R.string.modes_chip_auto_x, formatAutoEnd(it)) }
+    if (mode.keepAwake == true) parts += stringResource(R.string.modes_chip_awake)
+    mode.launchPackage?.let { parts += stringResource(R.string.modes_chip_launch_x, launchLabel ?: it) }
+    return parts.joinToString(" · ")
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -160,10 +164,10 @@ fun ModeCard(
                 Spacer(Modifier.height(Spacing.xxs))
                 // One summary line instead of competing chips + icon buttons.
                 Text(
-                    modeSummaryLine(mode, tagCount),
+                    modeSummaryLine(mode, tagCount, launchLabel),
                     style = MaterialTheme.typography.labelLarge,
                     color = palette.textSecondary,
-                    maxLines = 2,
+                    maxLines = 3,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 )
             }
@@ -204,77 +208,6 @@ fun ModeCard(
                 }
             }
         }
-        Spacer(Modifier.height(Spacing.sm))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
-                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
-            ) {
-                StatusChip(
-                    text = when (mode.notificationMode) {
-                        com.flowtap.app.data.model.NotificationMode.DND ->
-                            stringResource(R.string.tags_chip_dnd)
-                        com.flowtap.app.data.model.NotificationMode.SILENT ->
-                            stringResource(R.string.modes_chip_silent)
-                        com.flowtap.app.data.model.NotificationMode.NONE ->
-                            stringResource(R.string.modes_chip_none)
-                    },
-                    icon = Icons.Outlined.NotificationsOff,
-                )
-                StatusChip(
-                    text = if (mode.strictMode) {
-                        stringResource(R.string.tags_chip_strict)
-                    } else {
-                        stringResource(R.string.tags_chip_flexible)
-                    },
-                    icon = Icons.Outlined.Lock,
-                )
-                if (mode.allowlistOnly) {
-                    StatusChip(
-                        text = stringResource(
-                            R.string.modes_chip_allowlist_x,
-                            mode.allowedApps.size,
-                        ),
-                        icon = Icons.Outlined.Checklist,
-                    )
-                } else {
-                    StatusChip(
-                        text = pluralStringResource(
-                            R.plurals.plural_blocked_short,
-                            mode.blockedApps.size,
-                            mode.blockedApps.size,
-                        ),
-                        icon = Icons.Outlined.Block,
-                    )
-                }
-                if (mode.keepAwake == true) {
-                    StatusChip(text = stringResource(R.string.modes_chip_awake))
-                }
-                mode.autoEndMinutes?.let {
-                    StatusChip(
-                        text = stringResource(R.string.modes_chip_auto_x, formatAutoEnd(it)),
-                        icon = Icons.Outlined.Timer,
-                    )
-                }
-                StatusChip(
-                    text = stringResource(
-                        R.string.modes_chip_goal_x,
-                        formatGoalShort(mode.dailyGoalMinutes),
-                    ),
-                    icon = Icons.Outlined.Timer,
-                )
-                if (mode.launchPackage != null) {
-                    StatusChip(
-                        text = stringResource(
-                            R.string.modes_chip_launch_x,
-                            launchLabel ?: mode.launchPackage,
-                        ),
-                        icon = Icons.Outlined.Launch,
-                    )
-                }
-                StatusChip(
-                    text = pluralStringResource(R.plurals.plural_mode_tags, tagCount, tagCount),
-                )
-            }
     }
 }
 
@@ -523,6 +456,16 @@ fun ModeEditorForm(
                     }
                     Switch(checked = state.strict, onCheckedChange = null)
                 }
+                Spacer(Modifier.height(Spacing.xs))
+                // M5: explicit ending-rule summary beneath the toggle.
+                Text(
+                    stringResource(
+                        if (state.strict) R.string.modes_end_strict_summary
+                        else R.string.modes_end_flex_summary,
+                    ),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
 
                 Spacer(Modifier.height(Spacing.md))
                 Text(
@@ -619,6 +562,18 @@ fun ModeEditorForm(
                             Text(app.label, style = MaterialTheme.typography.bodyMedium)
                         }
                     }
+                }
+                // M5: warn when launch-on-start is simultaneously blocked.
+                val launchConflict = state.launchPkg?.let { pkg ->
+                    if (state.allowlistOnly) pkg !in state.allowed else pkg in state.blocked
+                } ?: false
+                if (launchConflict) {
+                    Spacer(Modifier.height(Spacing.xs))
+                    Text(
+                        stringResource(R.string.modes_launch_conflict),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.error,
+                    )
                 }
                 } // advancedOpen
     }

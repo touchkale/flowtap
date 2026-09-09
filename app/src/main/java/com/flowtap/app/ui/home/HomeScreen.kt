@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
@@ -112,13 +111,27 @@ fun HomeScreen(
     val active by SessionManager.active.collectAsStateWithLifecycle()
 
     // F12: NFC-off hint, refreshed whenever returning from system screens.
+    // T2: stats also refresh on resume so a midnight crossing without a new
+    // session still recomputes today's totals.
     val nfcTick = rememberResumeTick()
+    LaunchedEffect(nfcTick) { container.statsRepository.refreshTime() }
     val nfcOff = remember(nfcTick) {
         Permissions.hasNfcHardware(context) && !Permissions.isNfcEnabled(context)
     }
 
     fun onToggleDnd() {
         vm.cycleNotificationMode { result ->
+            if (result == HomeViewModel.CycleResult.DND &&
+                !Permissions.isDndGranted(context)
+            ) {
+                Permissions.enableDnd(context)
+            }
+        }
+    }
+
+    // H2: true three-option selector — direct choice, same permission routing.
+    fun onSelectSound(next: com.flowtap.app.data.model.NotificationMode) {
+        vm.setNotificationMode(next) { result ->
             if (result == HomeViewModel.CycleResult.DND &&
                 !Permissions.isDndGranted(context)
             ) {
@@ -187,6 +200,7 @@ fun HomeScreen(
                 onEnd = { vm.endFocus() },
                 onEmergencyEnd = { vm.endFocusEmergency() },
                 onToggleDnd = ::onToggleDnd,
+                onSelectSound = ::onSelectSound,
                 modeTodayBaseMs = runningBaseMs,
                 modeGoalMs = runningGoalMs,
             )
@@ -204,6 +218,7 @@ fun HomeScreen(
                 modesEmpty = modes.isEmpty(),
                 onStart = { vm.startFocusDefault() },
                 onToggleDnd = ::onToggleDnd,
+                onSelectSound = ::onSelectSound,
                 onPairTag = {
                     context.startActivity(Intent(context, PairTagActivity::class.java))
                 },
@@ -229,6 +244,7 @@ private fun IdleView(
     modesEmpty: Boolean,
     onStart: () -> Unit,
     onToggleDnd: () -> Unit,
+    onSelectSound: (com.flowtap.app.data.model.NotificationMode) -> Unit,
     onPairTag: () -> Unit,
     onOpenHistory: () -> Unit,
 ) {
@@ -434,26 +450,11 @@ private fun IdleView(
                 compact = true,
             )
         }
-        Box(
-            modifier = Modifier.toggleable(
-                value = mode?.notificationMode ==
-                    com.flowtap.app.data.model.NotificationMode.DND,
-                role = Role.Switch,
-                onValueChange = { onToggleDnd() },
-            ),
-        ) {
-            StatusChip(
-                text = when (mode?.notificationMode) {
-                    com.flowtap.app.data.model.NotificationMode.DND ->
-                        stringResource(R.string.home_dnd_on)
-                    com.flowtap.app.data.model.NotificationMode.SILENT ->
-                        stringResource(R.string.home_silent)
-                    else -> stringResource(R.string.home_notif_off)
-                },
-                icon = Icons.Outlined.NotificationsOff,
-                compact = true,
-            )
-        }
+        SoundModeChip(
+            current = mode?.notificationMode
+                ?: com.flowtap.app.data.model.NotificationMode.NONE,
+            onSelect = onSelectSound,
+        )
     }
 
     Spacer(Modifier.height(Spacing.xl))
@@ -488,6 +489,7 @@ private fun ActiveSessionView(
     onEnd: () -> Unit,
     onEmergencyEnd: () -> Unit,
     onToggleDnd: () -> Unit,
+    onSelectSound: (com.flowtap.app.data.model.NotificationMode) -> Unit,
     modeTodayBaseMs: Long,
     modeGoalMs: Long,
 ) {
@@ -630,27 +632,10 @@ private fun ActiveSessionView(
                 compact = true,
             )
         }
-        Box(
-            modifier = Modifier.toggleable(
-                value = snap.notificationMode ==
-                    com.flowtap.app.data.model.NotificationMode.DND,
-                role = Role.Switch,
-                onValueChange = { onToggleDnd() },
-            ),
-        ) {
-            StatusChip(
-                text = when (snap.notificationMode) {
-                    com.flowtap.app.data.model.NotificationMode.DND ->
-                        stringResource(R.string.home_dnd_on)
-                    com.flowtap.app.data.model.NotificationMode.SILENT ->
-                        stringResource(R.string.home_silent)
-                    com.flowtap.app.data.model.NotificationMode.NONE ->
-                        stringResource(R.string.home_notif_off)
-                },
-                icon = Icons.Outlined.NotificationsOff,
-                compact = true,
-            )
-        }
+        SoundModeChip(
+            current = snap.notificationMode,
+            onSelect = onSelectSound,
+        )
     }
 
     Spacer(Modifier.height(Spacing.lg))
@@ -731,6 +716,66 @@ private fun ActiveSessionView(
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
         )
+    }
+}
+
+/**
+ * H2: true three-option sound selector. A plain button opens Keep
+ * unchanged / Silent / Do Not Disturb — never a switch implying binary.
+ */
+@Composable
+private fun SoundModeChip(
+    current: com.flowtap.app.data.model.NotificationMode,
+    onSelect: (com.flowtap.app.data.model.NotificationMode) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val label = when (current) {
+        com.flowtap.app.data.model.NotificationMode.DND ->
+            stringResource(R.string.home_dnd_on)
+        com.flowtap.app.data.model.NotificationMode.SILENT ->
+            stringResource(R.string.home_silent)
+        com.flowtap.app.data.model.NotificationMode.NONE ->
+            stringResource(R.string.home_notif_off)
+    }
+    Box {
+        Box(
+            modifier = Modifier
+                .clickable(role = Role.Button, onClick = { open = true })
+                .semantics {
+                    contentDescription =
+                        context.getString(R.string.home_sound_cd_x, label)
+                },
+        ) {
+            StatusChip(
+                text = label,
+                icon = Icons.Outlined.NotificationsOff,
+                compact = true,
+            )
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.modes_notif_none)) },
+                onClick = {
+                    open = false
+                    onSelect(com.flowtap.app.data.model.NotificationMode.NONE)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.modes_notif_silent)) },
+                onClick = {
+                    open = false
+                    onSelect(com.flowtap.app.data.model.NotificationMode.SILENT)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.modes_notif_dnd)) },
+                onClick = {
+                    open = false
+                    onSelect(com.flowtap.app.data.model.NotificationMode.DND)
+                },
+            )
+        }
     }
 }
 

@@ -120,6 +120,39 @@ class HomeViewModel(
         }
     }
 
+    /**
+     * Direct sound selection (H2): the Home chip is a true three-option
+     * selector, not a switch. Same persistence + live-apply as the cycle.
+     */
+    fun setNotificationMode(
+        next: com.flowtap.app.data.model.NotificationMode,
+        onResult: (CycleResult) -> Unit,
+    ) {
+        viewModelScope.launch {
+            val targetId = SessionManager.current?.modeId
+                ?: selectedMode.value?.id
+                ?: modes.value.firstOrNull()?.id
+            val mode = targetId?.let { repo.getMode(it) }
+            if (mode == null) {
+                onResult(CycleResult.NO_MODE)
+                return@launch
+            }
+            if (mode.notificationMode != next) {
+                repo.updateMode(mode.copy(notificationMode = next))
+                if (SessionManager.current?.modeId == mode.id) {
+                    SessionManager.setSessionNotificationMode(next)
+                }
+            }
+            onResult(
+                when (next) {
+                    com.flowtap.app.data.model.NotificationMode.DND -> CycleResult.DND
+                    com.flowtap.app.data.model.NotificationMode.SILENT -> CycleResult.SILENT
+                    com.flowtap.app.data.model.NotificationMode.NONE -> CycleResult.NONE
+                }
+            )
+        }
+    }
+
     fun endFocus() {
         SessionManager.endSession(EndReason.IN_APP)
     }

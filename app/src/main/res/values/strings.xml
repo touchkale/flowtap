@@ -68,6 +68,7 @@
     <string name="home_goal_remaining_x">Goal %1$s · %2$s left</string>
     <string name="home_silent">Silent</string>
     <string name="home_notif_off">Phone unchanged</string>
+    <string name="home_sound_cd_x">Sound: %1$s. Tap to change.</string>
 
     <!-- Tags & modes -->
     <string name="tags_title">Tags</string>
@@ -106,7 +107,10 @@
     <string name="modes_more_cd">More actions</string>
     <string name="modes_active_locked">A session is running — its mode can\'t be deleted until it ends.</string>
     <string name="modes_keep_awake">Keep screen awake</string>
-    <string name="modes_keep_system">System</string>
+    <string name="modes_keep_system">Use app default</string>
+    <string name="modes_end_strict_summary">Ends with the starting tag. Emergency hold always available.</string>
+    <string name="modes_end_flex_summary">Ends from the app or with any tag of this mode.</string>
+    <string name="modes_launch_conflict">This app is also blocked — it will trigger the block screen right after launch.</string>
     <string name="modes_keep_on">On</string>
     <string name="modes_keep_off">Off</string>
     <string name="modes_auto_end">Auto-end timer</string>
@@ -346,6 +350,7 @@
     <string name="notif_channel_info">Focus updates</string>
     <string name="notif_channel_info_desc">Session completed and reminder notifications</string>
     <string name="notif_session_text">Focus session in progress</string>
+    <string name="notif_starting">Restoring session…</string>
     <string name="notif_complete_x">%1$s complete</string>
     <string name="notif_strict_title_x">Finish with your %1$s tag</string>
     <string name="notif_strict_text_x">%1$s is still active. Only the tag that started it can end it.</string>

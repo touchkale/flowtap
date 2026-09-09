@@ -81,6 +81,12 @@ fun HistoryScreen(container: AppContainer) {
 
     var selectedSession by remember { mutableStateOf<SessionRecord?>(null) }
 
+    // T2: recompute day-boundary stats on resume (midnight crossing).
+    val resumeTick = com.flowtap.app.ui.util.rememberResumeTick()
+    androidx.compose.runtime.LaunchedEffect(resumeTick) {
+        container.statsRepository.refreshTime()
+    }
+
     // Daily bars compare against the combined per-mode daily goals.
     val dailyGoalMs = combinedDaily
     val sidePadding = rememberAdaptiveSidePadding()

@@ -45,11 +45,21 @@ class SessionService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Foreground services must call startForeground() synchronously inside
+        // onStartCommand — doing it after suspending work (restore, DataStore
+        // reads, Main dispatch) trips ForegroundServiceDidNotStartInTime and
+        // kills the process on cold start with a live session. Post a
+        // placeholder immediately, then replace it once loaded.
+        startForeground(
+            Notifications.SESSION_NOTIF_ID,
+            Notifications.startingNotification(this),
+        )
         scope.launch {
             SessionManager.ensureLoaded()
             val snap = SessionManager.current
             withContext(Dispatchers.Main) {
                 if (snap == null) {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
                     stopSelf()
                 } else {
                     val hardcore = runCatching {

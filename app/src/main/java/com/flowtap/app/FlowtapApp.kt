@@ -6,6 +6,7 @@ import com.flowtap.app.session.SessionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class FlowtapApp : Application() {
@@ -20,8 +21,17 @@ class FlowtapApp : Application() {
         super.onCreate()
         container = AppContainer(this)
         SessionManager.init(container)
-        // F1: guarantee the default "Deep Work" mode exists on first launch.
-        appScope.launch { container.focusRepository.ensureSeeded() }
+        // F1/D3: seed the default "Deep Work" mode once ever — never after
+        // intentional deletion.
+        appScope.launch {
+            val prefs = container.settingsDataStore
+            if (!prefs.seededOnce.first()) {
+                if (container.focusRepository.modeCount() == 0) {
+                    container.focusRepository.ensureSeeded()
+                }
+                prefs.setSeededOnce()
+            }
+        }
         // Sync synchronous engine caches for services/overlays (S2/S4/U1).
         appScope.launch {
             kotlinx.coroutines.flow.combine(

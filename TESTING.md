@@ -66,3 +66,15 @@ average window) plus legacy stats/time/notification/poller suites.
 - [ ] Emulator (older supported APIs): both engines ± access, rotation, reboot, revocation, midnight rollover, empty/populated
 - [ ] Physical the test device (Android 16/API 36, ~363dp, font 1.15): layout vs `docs/audit-2026-09-09/screenshots/`, light/dark/system, real NFC taps, real sound restore, incoming call + lock screen
 - [ ] Record Android version, app version/sha, and config in QA notes; attach before/after Settings + Mode Edit shots
+
+## Verified 2026-09-09 (isolated emulator, no phone changes)
+
+- Env: `VartaTest` AVD, Android 17/API 37 (fresh `-wipe-data` boot); app `0.1.0 (6aba4e8…0a9a530+)` debug; `testDebugUnitTest --rerun` 48 pass, `lintDebug` + `assembleDebug` green.
+- Onboarding → Home with zero app selection: Deep Work keeps empty blocklist ("0 apps blocked"); seeded once, never duplicated.
+- Session ticking: `00:00:07` → `00:01:34` with no input; day total rolls live; session elapsed and today's total labeled separately.
+- Process death: fixed `ForegroundServiceDidNotStartInTimeException` (service now foregrounds synchronously with a placeholder, then replaces it); no crash after fix across repeated force-stop/relaunch cycles.
+- Real reboot with live session: closed as `reboot`, no ghost session/service, short 25s run retained in recents/totals; mode edit (`YouTube` blocked) and all history survived.
+- Editor round-trip on device: card tap → toggle app → Save → Modes shows `1 blocked`; single navigation, no duplicate.
+- Settings/Modes/Home render verified by screenshot against audit direction (readiness card, Granted labels, conditional banking copy, compact cards, honest chips).
+
+Still requires physical hardware: NFC tap/pair flows, accessibility-engine blocking with real apps, DND/silent restore on device audio stack, both engines ± access, older supported APIs, TalkBack/keyboard/large-font passes, the test device layout comparison.

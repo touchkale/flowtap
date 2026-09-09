@@ -44,6 +44,28 @@ object Notifications {
         }
     }
 
+    /**
+     * Synchronous placeholder posted the moment the service starts, before the
+     * persisted session is loaded. Replaced with [sessionNotification] once
+     * known — this ordering is what keeps cold-start restore crash-free.
+     */
+    fun startingNotification(context: Context): Notification {
+        val openIntent = PendingIntent.getActivity(
+            context,
+            0,
+            Intent(context, MainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        return NotificationCompat.Builder(context, CHANNEL_SESSION)
+            .setSmallIcon(R.drawable.ic_stat_focus)
+            .setContentTitle(context.getString(R.string.notif_starting))
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setContentIntent(openIntent)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .build()
+    }
+
     fun sessionNotification(
         context: Context,
         snap: ActiveSessionSnapshot,
