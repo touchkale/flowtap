@@ -1,0 +1,560 @@
+[
+  {
+    "workflow": "01-onboarding",
+    "file": "screens/onboard1-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "01-onboarding",
+    "file": "screens/onboard1-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "01-onboarding",
+    "file": "screens/onboard1-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "01-onboarding",
+    "file": "screens/onboard2-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "01-onboarding",
+    "file": "screens/onboard2-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "01-onboarding",
+    "file": "screens/onboard2-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "01-onboarding",
+    "file": "screens/onboard3-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "01-onboarding",
+    "file": "screens/onboard3-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "01-onboarding",
+    "file": "screens/onboard3-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "02-home-session",
+    "file": "screens/home-idle-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "02-home-session",
+    "file": "screens/home-idle-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "02-home-session",
+    "file": "screens/home-idle-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "02-home-session",
+    "file": "screens/home-active-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "02-home-session",
+    "file": "screens/home-active-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "02-home-session",
+    "file": "screens/home-active-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "02-home-session",
+    "file": "screens/home-ended-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "02-home-session",
+    "file": "screens/home-ended-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "02-home-session",
+    "file": "screens/home-ended-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "03-history",
+    "file": "screens/history-list-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "03-history",
+    "file": "screens/history-list-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "03-history",
+    "file": "screens/history-list-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "03-history",
+    "file": "screens/history-detail-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "03-history",
+    "file": "screens/history-detail-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "03-history",
+    "file": "screens/history-detail-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "03-history",
+    "file": "screens/history-delete-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "03-history",
+    "file": "screens/history-delete-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "03-history",
+    "file": "screens/history-delete-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "04-tags-nfc",
+    "file": "screens/tag-empty-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "04-tags-nfc",
+    "file": "screens/tag-empty-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "04-tags-nfc",
+    "file": "screens/tag-empty-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "04-tags-nfc",
+    "file": "screens/tag-pair-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "04-tags-nfc",
+    "file": "screens/tag-pair-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "04-tags-nfc",
+    "file": "screens/tag-pair-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "04-tags-nfc",
+    "file": "screens/tag-success-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "04-tags-nfc",
+    "file": "screens/tag-success-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "04-tags-nfc",
+    "file": "screens/tag-success-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "04-tags-nfc",
+    "file": "screens/tag-error-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "04-tags-nfc",
+    "file": "screens/tag-error-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "04-tags-nfc",
+    "file": "screens/tag-error-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "05-modes",
+    "file": "screens/mode-list-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "05-modes",
+    "file": "screens/mode-list-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "05-modes",
+    "file": "screens/mode-list-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "05-modes",
+    "file": "screens/mode-menu-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "05-modes",
+    "file": "screens/mode-menu-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "05-modes",
+    "file": "screens/mode-menu-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "05-modes",
+    "file": "screens/editor-create-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "05-modes",
+    "file": "screens/editor-create-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "05-modes",
+    "file": "screens/editor-create-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "05-modes",
+    "file": "screens/mode-saved-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "05-modes",
+    "file": "screens/mode-saved-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "05-modes",
+    "file": "screens/mode-saved-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "06-mode-editor",
+    "file": "screens/editor-top-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "06-mode-editor",
+    "file": "screens/editor-top-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "06-mode-editor",
+    "file": "screens/editor-top-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "06-mode-editor",
+    "file": "screens/editor-apps-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "06-mode-editor",
+    "file": "screens/editor-apps-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "06-mode-editor",
+    "file": "screens/editor-apps-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "06-mode-editor",
+    "file": "screens/editor-bottom-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "06-mode-editor",
+    "file": "screens/editor-bottom-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "06-mode-editor",
+    "file": "screens/editor-bottom-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "07-settings",
+    "file": "screens/settings-top-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "07-settings",
+    "file": "screens/settings-top-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "07-settings",
+    "file": "screens/settings-top-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "07-settings",
+    "file": "screens/settings-middle-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "07-settings",
+    "file": "screens/settings-middle-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "07-settings",
+    "file": "screens/settings-middle-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "07-settings",
+    "file": "screens/settings-bottom-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "07-settings",
+    "file": "screens/settings-bottom-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "07-settings",
+    "file": "screens/settings-bottom-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "08-blocking-overlay",
+    "file": "screens/active-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "08-blocking-overlay",
+    "file": "screens/active-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "08-blocking-overlay",
+    "file": "screens/active-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "08-blocking-overlay",
+    "file": "screens/notification-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "08-blocking-overlay",
+    "file": "screens/notification-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "08-blocking-overlay",
+    "file": "screens/notification-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "08-blocking-overlay",
+    "file": "screens/blocked-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "08-blocking-overlay",
+    "file": "screens/blocked-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "08-blocking-overlay",
+    "file": "screens/blocked-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "08-blocking-overlay",
+    "file": "screens/emergency-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "08-blocking-overlay",
+    "file": "screens/emergency-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "08-blocking-overlay",
+    "file": "screens/emergency-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "09-theming",
+    "file": "screens/home-idle-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "09-theming",
+    "file": "screens/home-idle-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "09-theming",
+    "file": "screens/home-idle-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "09-theming",
+    "file": "screens/home-idle-dark-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "09-theming",
+    "file": "screens/home-idle-dark-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "09-theming",
+    "file": "screens/home-idle-dark-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "09-theming",
+    "file": "screens/mode-list-dark-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "09-theming",
+    "file": "screens/mode-list-dark-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "09-theming",
+    "file": "screens/mode-list-dark-large.svg",
+    "width": 440,
+    "height": 956
+  },
+  {
+    "workflow": "09-theming",
+    "file": "screens/settings-bottom-dark-compact.svg",
+    "width": 360,
+    "height": 800
+  },
+  {
+    "workflow": "09-theming",
+    "file": "screens/settings-bottom-dark-pixel-10-pro.svg",
+    "width": 400,
+    "height": 892.5
+  },
+  {
+    "workflow": "09-theming",
+    "file": "screens/settings-bottom-dark-large.svg",
+    "width": 440,
+    "height": 956
+  }
+]

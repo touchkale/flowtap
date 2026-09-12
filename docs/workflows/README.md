@@ -1,25 +1,25 @@
-# FlowTap UI workflows
+# FlowTap UI design studies
 
-Real emulator screenshots (Pixel 10 Pro canvas, 1280×2856) assembled as
-labeled SVGs. One SVG per independent workflow; each panel is numbered in
-flow order with a caption.
+Open **[the preview gallery](index.html)** to review all nine workflows and switch between compact, Pixel 10 Pro and larger phone layouts.
 
-Captured on: `VartaTest` AVD, Android API 37, fresh `-wipe-data` boot,
-FlowTap `v0.1.0 (6dcc4ee)` debug, Sep 2026, via `adb screencap` (no mockups).
-Light theme unless a panel says otherwise.
+| SVG | Design coverage |
+| --- | --- |
+| [01-onboarding.svg](01-onboarding.svg) | Pairing, permissions, app selection |
+| [02-home-session.svg](02-home-session.svg) | Idle, active and completed sessions |
+| [03-history.svg](03-history.svg) | Week, session detail, delete confirmation |
+| [04-tags-nfc.svg](04-tags-nfc.svg) | Empty, pair, success, retry |
+| [05-modes.svg](05-modes.svg) | Library, actions, saved state |
+| [06-mode-editor.svg](06-mode-editor.svg) | Scrolling form and app picker |
+| [07-settings.svg](07-settings.svg) | Readiness, permissions, behavior, appearance |
+| [08-blocking-overlay.svg](08-blocking-overlay.svg) | Active session, notification, block, emergency end |
+| [09-theming.svg](09-theming.svg) | Matching light and dark layouts |
+| [10-responsive-check.svg](10-responsive-check.svg) | Three sizes side by side |
 
-| SVG | Workflow | Panels |
-| --- | -------- | ------ |
-| `01-onboarding.svg` | Onboarding (pair tag → permissions → app picker) | 4 |
-| `02-home-session.svg` | Home + session lifecycle (idle → active → ticking → ended) | 4 |
-| `03-history.svg` | History (week chart + list → detail + delete) | 2 |
-| `04-tags-nfc.svg` | Tags + NFC pairing | 2 |
-| `05-modes.svg` | Modes list (cards → overflow → create → saved) | 4 |
-| `06-mode-editor.svg` | Mode editor — LONG SCROLLABLE SCREEN (name → apps → advanced → save) | 4 |
-| `07-settings.svg` | Settings — LONG SCROLLABLE SCREEN (readiness → permissions → theme/about) | 3 |
-| `08-blocking-overlay.svg` | Blocking + enforcement (active → notification → blocked app → end) | 5 |
-| `09-theming.svg` | Theming + appearance (dark Home/Modes/Settings + light default) | 4 |
+These are **editable vector proposals**, with sample data. The Android application has not been modified. The original screenshot-based SVGs are preserved in [reference/](reference/); their original captures remain in `raw/`.
 
-Raw captures live in `raw/`. Emulator limits noted inside the SVGs:
-no NFC hardware, accessibility overlay doesn't composite on emulator GPU,
-compat blocking needs usage access.
+- `screens/`: individual SVGs in three phone sizes, plus complete scrolling editor and Settings sheets.
+- [DESIGN.md](DESIGN.md): geometry, colors, responsive layout rules and interaction specifications.
+- `generate_mockups.py`: reproducible standard-library Python source for all SVGs and the gallery.
+- `manifest.json`: workflow-to-screen mapping.
+
+Rebuild: `python3 docs/workflows/generate_mockups.py`.
