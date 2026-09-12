@@ -59,6 +59,7 @@ class BlockOverlayController(private val service: AccessibilityService) {
     private var root: View? = null
     private var timerText: TextView? = null
     private var titleText: TextView? = null
+    private var blockedText: TextView? = null
     private var hintText: TextView? = null
     private var endButton: Button? = null
     private var holdContainer: LinearLayout? = null
@@ -140,11 +141,17 @@ class BlockOverlayController(private val service: AccessibilityService) {
     }
 
     /** Immediately shows the overlay with the given session. Returns true on success. */
-    fun show(session: ActiveSessionSnapshot): Boolean = runCatching {
+    fun show(session: ActiveSessionSnapshot, blockedPkg: String? = null): Boolean = runCatching {
         snap = session
-        if (ensureShown()) render(session)
+        val label = blockedPkg?.let { resolveAppLabel(it) }
+        if (ensureShown()) render(session, label)
         true
     }.getOrDefault(false)
+
+    private fun resolveAppLabel(pkg: String): String? = runCatching {
+        val pm = service.packageManager
+        pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()
+    }.getOrDefault(pkg)
 
     private fun ensureShown(): Boolean {
         if (root != null) return true
@@ -172,11 +179,17 @@ class BlockOverlayController(private val service: AccessibilityService) {
         return true
     }
 
-    private fun render(current: ActiveSessionSnapshot) {
+    private fun render(current: ActiveSessionSnapshot, blockedLabel: String? = null) {
         resetHold()
         // S4: one lock policy — strict or Hardcore. Emergency exit always stays.
         val hardcore = com.flowtap.app.session.EngineState.hardcore
         val locked = com.flowtap.app.session.SessionPolicy.isEndLocked(current, hardcore)
+        if (blockedLabel != null) {
+            blockedText?.visibility = View.VISIBLE
+            blockedText?.text = service.getString(R.string.overlay_paused_x, blockedLabel)
+        } else {
+            blockedText?.visibility = View.GONE
+        }
         titleText?.text = service.getString(R.string.overlay_active_x, current.modeName)
         hintText?.text = if (current.strictMode) {
             service.getString(R.string.overlay_strict_hint, current.tagName ?: "NFC")
@@ -210,12 +223,12 @@ class BlockOverlayController(private val service: AccessibilityService) {
         fun px(dpv: Float) = (dpv * dp).toInt()
 
         val dark = isDark
-        val bg = if (dark) 0xFF0A1410.toInt() else 0xFFEDF5EF.toInt()
-        val primary = if (dark) 0xFFF0F7F3.toInt() else 0xFF0A1A14.toInt()
-        val secondary = if (dark) 0xFFA6BFB4.toInt() else 0xFF3F5A4E.toInt()
-        val accent = if (dark) 0xFF34D399.toInt() else 0xFF047857.toInt()
-        val danger = if (dark) 0xFFE05B5B.toInt() else 0xFFC24848.toInt()
-        val onAccent = 0xFFFFFFFF.toInt()
+        val bg = if (dark) 0xFF101B18.toInt() else 0xFFF5F4EE.toInt()
+        val primary = if (dark) 0xFFF0F4ED.toInt() else 0xFF192D28.toInt()
+        val secondary = if (dark) 0xFFB0C2B6.toInt() else 0xFF596A63.toInt()
+        val accent = if (dark) 0xFFACD6B0.toInt() else 0xFF245C48.toInt()
+        val danger = if (dark) 0xFFFFB4AA.toInt() else 0xFFA43D35.toInt()
+        val onAccent = if (dark) 0xFF142B1F.toInt() else 0xFFFFFFFF.toInt()
 
         val rootLayout = LinearLayout(service).apply {
             setBackgroundColor(bg)
@@ -248,6 +261,17 @@ class BlockOverlayController(private val service: AccessibilityService) {
         })
 
         rootLayout.addView(SpacerView(px(20f)))
+
+        blockedText = TextView(service).apply {
+            textSize = 18f
+            setTextColor(primary)
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            gravity = Gravity.CENTER
+            visibility = View.GONE
+        }
+        rootLayout.addView(blockedText)
+
+        rootLayout.addView(SpacerView(px(8f)))
 
         titleText = TextView(service).apply {
             text = ""
@@ -301,7 +325,7 @@ class BlockOverlayController(private val service: AccessibilityService) {
             text = service.getString(R.string.common_end_session)
             textSize = 16f
             setTextColor(onAccent)
-            background = pillBackground(accent, px(20f))
+            background = pillBackground(accent, px(17f))
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 px(56f),
@@ -332,7 +356,7 @@ class BlockOverlayController(private val service: AccessibilityService) {
                 text = service.getString(R.string.overlay_hold_caps)
                 textSize = 15f
                 setTextColor(danger)
-                background = pillOutline(danger, px(20f), px(1f).coerceAtLeast(2))
+                background = pillOutline(danger, px(17f), px(1f).coerceAtLeast(2))
                 layoutParams = LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     px(56f),
@@ -368,7 +392,7 @@ class BlockOverlayController(private val service: AccessibilityService) {
             text = service.getString(R.string.overlay_show_timer)
             textSize = 14f
             setTextColor(accent)
-            background = pillBackground(0x00000000, px(20f))
+            background = pillBackground(0x00000000, px(17f))
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 px(48f),

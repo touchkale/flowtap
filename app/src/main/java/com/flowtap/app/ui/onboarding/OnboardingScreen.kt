@@ -84,6 +84,8 @@ import com.flowtap.app.ui.components.EmptyState
 import com.flowtap.app.ui.components.PulsingNfcIcon
 import com.flowtap.app.ui.components.RecommendedBlockCard
 import com.flowtap.app.ui.theme.Dimens
+import com.flowtap.app.ui.theme.PaperCardShape
+import com.flowtap.app.ui.theme.PrimaryButtonShape
 import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Spacing
 import com.flowtap.app.ui.util.rememberAdaptiveSidePadding
@@ -265,8 +267,8 @@ private fun PairTagStep(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(palette.card, MaterialTheme.shapes.medium)
-                    .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
+                    .background(palette.card, PaperCardShape)
+                    .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
                     .padding(horizontal = Spacing.cardPadding, vertical = Spacing.md),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -295,8 +297,8 @@ private fun PairTagStep(
                 context.startActivity(Intent(context, PairTagActivity::class.java))
             },
             modifier = Modifier.fillMaxWidth().height(Dimens.primaryButtonHeight),
-            shape = MaterialTheme.shapes.medium,
-            colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
+            shape = PrimaryButtonShape,
+            colors = ButtonDefaults.buttonColors(containerColor = palette.accent, contentColor = palette.onAccent),
         ) {
             Icon(Icons.Outlined.Nfc, contentDescription = null)
             Spacer(Modifier.size(Spacing.sm))
@@ -321,9 +323,9 @@ private fun SuggestionChip(label: String, modeName: String, onClick: () -> Unit)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
-            .clip(MaterialTheme.shapes.medium)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
+            .clip(PaperCardShape)
             .clickable(onClick = onClick, role = Role.Button)
             .padding(horizontal = Spacing.cardPadding, vertical = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
@@ -532,13 +534,13 @@ private fun PermissionsStep(vm: OnboardingViewModel, onNext: () -> Unit) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(palette.card, MaterialTheme.shapes.medium)
+                        .background(palette.card, PaperCardShape)
                         .border(
                             Dimens.cardBorderWidth,
                             palette.cardBorder,
                             MaterialTheme.shapes.medium,
                         )
-                        .clip(MaterialTheme.shapes.medium)
+                        .clip(PaperCardShape)
                         .toggleable(
                             value = hardcore,
                             onValueChange = { vm.setHardcore(it) },
@@ -570,12 +572,22 @@ private fun PermissionsStep(vm: OnboardingViewModel, onNext: () -> Unit) {
         Button(
             onClick = onNext,
             modifier = Modifier.fillMaxWidth().height(Dimens.primaryButtonHeight),
-            shape = MaterialTheme.shapes.medium,
-            colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
+            shape = PrimaryButtonShape,
+            colors = ButtonDefaults.buttonColors(containerColor = palette.accent, contentColor = palette.onAccent),
         ) {
             Text(
                 stringResource(R.string.common_continue),
                 style = MaterialTheme.typography.titleMedium,
+            )
+        }
+        if (!checks.blocking) {
+            Spacer(Modifier.height(Spacing.sm))
+            Text(
+                stringResource(R.string.settings_setup_missing_x, "accessibility"),
+                style = MaterialTheme.typography.labelLarge,
+                color = palette.textSecondary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
         Spacer(Modifier.height(Spacing.lg))
@@ -594,7 +606,7 @@ private fun MethodRow(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                if (selected) palette.accent else palette.ringTrack,
+                if (selected) palette.selectedSurface else palette.card,
                 MaterialTheme.shapes.small,
             )
             .border(
@@ -611,14 +623,12 @@ private fun MethodRow(
             Text(
                 title,
                 style = MaterialTheme.typography.titleSmall,
-                color = if (selected) MaterialTheme.colorScheme.onPrimary
-                else palette.textPrimary,
+                color = palette.textPrimary,
             )
             Text(
                 subtitle,
                 style = MaterialTheme.typography.labelMedium,
-                color = if (selected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
-                else palette.textSecondary,
+                color = palette.textSecondary,
             )
         }
     }
@@ -630,9 +640,9 @@ private fun PermRow(item: PermItem) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
-            .clip(MaterialTheme.shapes.medium)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
+            .clip(PaperCardShape)
             .clickable(onClick = item.action, role = Role.Button)
             .padding(Spacing.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
@@ -790,8 +800,8 @@ private fun BlockedAppsStep(vm: OnboardingViewModel, onDone: () -> Unit) {
             onClick = { vm.finish(onDone) },
             enabled = !saving,
             modifier = Modifier.fillMaxWidth().height(Dimens.primaryButtonHeight),
-            shape = MaterialTheme.shapes.medium,
-            colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
+            shape = PrimaryButtonShape,
+            colors = ButtonDefaults.buttonColors(containerColor = palette.accent, contentColor = palette.onAccent),
         ) {
             Text(
                 if (saving) {

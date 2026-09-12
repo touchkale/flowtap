@@ -61,6 +61,8 @@ import com.flowtap.app.ui.components.AppIcon
 import com.flowtap.app.ui.components.RecommendedBlockCard
 import com.flowtap.app.ui.components.StatusChip
 import com.flowtap.app.ui.theme.Dimens
+import com.flowtap.app.ui.theme.PaperCardShape
+import com.flowtap.app.ui.theme.PrimaryButtonShape
 import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Spacing
 import com.flowtap.app.util.RecommendedApps
@@ -144,9 +146,9 @@ fun ModeCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
-            .clip(MaterialTheme.shapes.medium)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
+            .clip(PaperCardShape)
             .clickable(onClick = onEdit, role = Role.Button)
             .padding(horizontal = Spacing.cardPadding, vertical = Spacing.md),
     ) {
@@ -595,7 +597,7 @@ private fun KeepAwakeSelector(selected: Boolean?, onSelect: (Boolean?) -> Unit) 
                     .weight(1f)
                     .heightIn(min = Dimens.presetMinHeight)
                     .background(
-                        if (isSelected) palette.accent else palette.ringTrack,
+                        if (isSelected) palette.selectedSurface else palette.card,
                         MaterialTheme.shapes.small,
                     )
                     .border(
@@ -612,7 +614,7 @@ private fun KeepAwakeSelector(selected: Boolean?, onSelect: (Boolean?) -> Unit) 
                 Text(
                     text = label,
                     style = MaterialTheme.typography.labelLarge,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else palette.textSecondary,
+                    color = if (isSelected) palette.textPrimary else palette.textSecondary,
                 )
             }
         }
@@ -656,12 +658,12 @@ private fun AutoEndChip(
         modifier = Modifier
             .heightIn(min = Dimens.presetMinHeight)
             .background(
-                if (isSelected) paletteSelected else palette.ringTrack,
+                if (isSelected) palette.selectedSurface else palette.card,
                 MaterialTheme.shapes.small,
             )
             .border(
                 Dimens.cardBorderWidth,
-                if (isSelected) paletteSelected else palette.cardBorder,
+                if (isSelected) palette.accent else palette.cardBorder,
                 MaterialTheme.shapes.small,
             )
             .clip(MaterialTheme.shapes.small)
@@ -673,7 +675,7 @@ private fun AutoEndChip(
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
-            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else palette.textSecondary,
+            color = if (isSelected) palette.textPrimary else palette.textSecondary,
         )
     }
 }
@@ -835,7 +837,7 @@ private fun NotificationModeSelector(
                         .weight(1f)
                         .heightIn(min = Dimens.presetMinHeight)
                         .background(
-                            if (isSelected) palette.accent else palette.ringTrack,
+                            if (isSelected) palette.selectedSurface else palette.card,
                             MaterialTheme.shapes.small,
                         )
                         .border(

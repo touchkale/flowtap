@@ -328,6 +328,7 @@
 
     <!-- Blocking overlay -->
     <string name="overlay_active_x">%1$s is active</string>
+    <string name="overlay_paused_x">Paused %1$s</string>
     <string name="overlay_elapsed">elapsed</string>
     <string name="overlay_elapsed_cd_x">%1$s elapsed in %2$s</string>
     <string name="overlay_strict_hint">Only your %1$s tag can end this session.</string>

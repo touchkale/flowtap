@@ -10,8 +10,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import com.flowtap.app.data.prefs.ThemeMode
 
-/** Provides the active vs idle palette to every composable in the tree. */
-val LocalFocusPalette = staticCompositionLocalOf<FocusPalette> { IdlePalette }
+/** Provides the paper palette to every composable in the tree. */
+val LocalFocusPalette = staticCompositionLocalOf<FocusPalette> { LightPalette }
 
 /** Resolves SYSTEM/LIGHT/DARK to a concrete dark flag. */
 @Composable
@@ -30,21 +30,18 @@ fun FlowtapTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    val palette = when {
-        active && darkTheme -> ActivePalette
-        active && !darkTheme -> ActiveLightPalette
-        !active && !darkTheme -> IdleLightPalette
-        else -> IdlePalette
-    }
-    val onAccent = if (darkTheme) Color(0xFF04121E) else Color.White
+    // Warm paper uses one background per theme. `active` is retained for call
+    // compatibility; running-session emphasis comes from live labels and the
+    // progress ring, not a background swap.
+    val palette = if (darkTheme) DarkPalette else LightPalette
     val colorScheme = if (darkTheme) {
         darkColorScheme(
             primary = palette.accent,
-            onPrimary = onAccent,
-            primaryContainer = palette.card,
+            onPrimary = palette.onAccent,
+            primaryContainer = palette.selectedSurface,
             onPrimaryContainer = palette.textPrimary,
             secondary = palette.accentText,
-            onSecondary = onAccent,
+            onSecondary = palette.onAccent,
             background = palette.background,
             onBackground = palette.textPrimary,
             surface = palette.card,
@@ -53,19 +50,20 @@ fun FlowtapTheme(
             onSurfaceVariant = palette.textSecondary,
             surfaceContainer = palette.card,
             surfaceContainerLow = palette.card,
+            surfaceContainerHighest = palette.selectedSurface,
             outline = palette.cardBorder,
             outlineVariant = palette.ringTrack,
             error = palette.danger,
-            onError = Color.White,
+            onError = palette.onAccent,
         )
     } else {
         lightColorScheme(
             primary = palette.accent,
-            onPrimary = onAccent,
-            primaryContainer = palette.card,
+            onPrimary = palette.onAccent,
+            primaryContainer = palette.selectedSurface,
             onPrimaryContainer = palette.textPrimary,
             secondary = palette.accentText,
-            onSecondary = onAccent,
+            onSecondary = palette.onAccent,
             background = palette.background,
             onBackground = palette.textPrimary,
             surface = palette.card,
@@ -74,6 +72,7 @@ fun FlowtapTheme(
             onSurfaceVariant = palette.textSecondary,
             surfaceContainer = palette.card,
             surfaceContainerLow = palette.card,
+            surfaceContainerHighest = palette.selectedSurface,
             outline = palette.cardBorder,
             outlineVariant = palette.ringTrack,
             error = palette.danger,

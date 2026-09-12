@@ -46,6 +46,8 @@ import com.flowtap.app.data.model.ActiveSessionSnapshot
 import com.flowtap.app.ui.components.AdaptiveTimerText
 import com.flowtap.app.ui.components.HoldToEndButton
 import com.flowtap.app.ui.theme.Dimens
+import com.flowtap.app.ui.theme.PaperCardShape
+import com.flowtap.app.ui.theme.PrimaryButtonShape
 import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Spacing
 import com.flowtap.app.ui.util.rememberAdaptiveSidePadding
@@ -63,6 +65,7 @@ import kotlinx.coroutines.delay
 fun BlockOverlayContent(
     snap: ActiveSessionSnapshot,
     onOpenTimer: () -> Unit,
+    blockedAppLabel: String? = null,
     onEndSession: (() -> Unit)? = null,
     onEmergencyEnd: (() -> Unit)? = null,
 ) {
@@ -106,6 +109,15 @@ fun BlockOverlayContent(
                 )
             }
             Spacer(Modifier.height(Spacing.xl))
+            if (blockedAppLabel != null) {
+                Text(
+                    text = stringResource(R.string.overlay_paused_x, blockedAppLabel),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = palette.textPrimary,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(Spacing.xs))
+            }
             Text(
                 text = stringResource(R.string.overlay_active_x, snap.modeName),
                 style = MaterialTheme.typography.headlineLarge,
@@ -150,8 +162,8 @@ fun BlockOverlayContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(Dimens.primaryButtonHeight),
-                    shape = MaterialTheme.shapes.medium,
-                    colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
+                    shape = PrimaryButtonShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = palette.accent, contentColor = palette.onAccent),
                 ) {
                     Text(
                         stringResource(R.string.common_end_session),

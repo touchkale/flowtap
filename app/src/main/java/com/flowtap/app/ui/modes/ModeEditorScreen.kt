@@ -55,6 +55,8 @@ import com.flowtap.app.R
 import com.flowtap.app.data.model.FocusMode
 import com.flowtap.app.di.AppContainer
 import com.flowtap.app.ui.theme.Dimens
+import com.flowtap.app.ui.theme.PaperCardShape
+import com.flowtap.app.ui.theme.PrimaryButtonShape
 import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Spacing
 import com.flowtap.app.ui.util.rememberAdaptiveSidePadding
@@ -164,20 +166,36 @@ fun ModeEditorScreen(
                         )
                     }
                 },
-                actions = {
-                    TextButton(onClick = ::save, enabled = state.saveEnabled && !isSaving) {
-                        Text(
-                            stringResource(R.string.common_save),
-                            color = if (state.saveEnabled && !isSaving) palette.accentText else palette.textTertiary,
-                        )
-                    }
-                },
+                actions = {},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = palette.card,
                     titleContentColor = palette.textPrimary,
                     navigationIconContentColor = palette.textPrimary,
                 ),
             )
+        },
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(palette.background)
+                    .padding(horizontal = sidePadding, vertical = Spacing.sm),
+            ) {
+                Button(
+                    onClick = ::save,
+                    enabled = state.saveEnabled && !isSaving,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(Dimens.primaryButtonHeight),
+                    shape = PrimaryButtonShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = palette.accent, contentColor = palette.onAccent),
+                ) {
+                    Text(
+                        if (isSaving) stringResource(R.string.common_saving) else stringResource(R.string.common_save),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
+            }
         },
     ) { padding ->
         Column(
@@ -300,22 +318,8 @@ fun ModeEditorScreen(
                     Text(stringResource(R.string.common_retry))
                 }
             }
-            Spacer(Modifier.height(Spacing.lg))
-            Button(
-                onClick = ::save,
-                enabled = state.saveEnabled && !isSaving,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(Dimens.primaryButtonHeight),
-                shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
-            ) {
-                Text(
-                    if (isSaving) stringResource(R.string.common_saving) else stringResource(R.string.common_save),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
             Spacer(Modifier.height(Spacing.listBottom))
+            Spacer(Modifier.height(Dimens.primaryButtonHeight))
         }
     }
 

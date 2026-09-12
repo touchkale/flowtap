@@ -59,6 +59,8 @@ import com.flowtap.app.ui.components.FocusCard
 import com.flowtap.app.ui.components.GoalRing
 import com.flowtap.app.ui.components.SectionHeader
 import com.flowtap.app.ui.theme.Dimens
+import com.flowtap.app.ui.theme.PaperCardShape
+import com.flowtap.app.ui.theme.PrimaryButtonShape
 import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Spacing
 import com.flowtap.app.ui.util.rememberAdaptiveSidePadding
@@ -329,8 +331,8 @@ private fun StatBox(
     val palette = LocalFocusPalette.current
     Column(
         modifier = modifier
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
             .padding(horizontal = Spacing.md, vertical = Spacing.lg),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -358,8 +360,8 @@ private fun SessionRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
             .clickable(onClick = onClick)
             .padding(horizontal = Spacing.cardPadding, vertical = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,

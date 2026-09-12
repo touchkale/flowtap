@@ -53,6 +53,8 @@ import com.flowtap.app.nfc.PairTagActivity
 import com.flowtap.app.session.SessionManager
 import com.flowtap.app.ui.components.EmptyState
 import com.flowtap.app.ui.theme.Dimens
+import com.flowtap.app.ui.theme.PaperCardShape
+import com.flowtap.app.ui.theme.PrimaryButtonShape
 import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Spacing
 import com.flowtap.app.ui.util.rememberAdaptiveSidePadding
@@ -111,7 +113,7 @@ fun ModesScreen(
             ) {
                 ExtendedFloatingActionButton(
                     onClick = onCreateMode,
-                    containerColor = palette.accent,
+                    containerColor = palette.accent, contentColor = palette.onAccent,
                 ) {
                     Icon(Icons.Outlined.Add, contentDescription = null)
                     Spacer(Modifier.size(Spacing.xs))
@@ -160,7 +162,7 @@ fun ModesScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(Dimens.primaryButtonHeight),
-                            shape = MaterialTheme.shapes.medium,
+                            shape = PrimaryButtonShape,
                         ) {
                             Icon(Icons.Outlined.Add, contentDescription = null)
                             Spacer(Modifier.size(Spacing.xs))
@@ -177,8 +179,8 @@ fun ModesScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(Dimens.primaryButtonHeight),
-                            shape = MaterialTheme.shapes.medium,
-                            colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
+                            shape = PrimaryButtonShape,
+                            colors = ButtonDefaults.buttonColors(containerColor = palette.accent, contentColor = palette.onAccent),
                         ) {
                             Icon(Icons.Outlined.Nfc, contentDescription = null)
                             Spacer(Modifier.size(Spacing.sm))

@@ -81,11 +81,15 @@ import com.flowtap.app.ui.components.SectionHeader
 import com.flowtap.app.ui.components.StatusChip
 import com.flowtap.app.ui.onboarding.Permissions
 import com.flowtap.app.ui.theme.Dimens
+import com.flowtap.app.ui.theme.PaperCardShape
+import com.flowtap.app.ui.theme.PrimaryButtonShape
 import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Spacing
 import com.flowtap.app.ui.util.rememberAdaptiveSidePadding
 import com.flowtap.app.ui.util.rememberIsCompactHeight
 import com.flowtap.app.ui.util.rememberResumeTick
+import com.flowtap.app.session.BlockingReadiness
+import com.flowtap.app.data.prefs.BlockingMethod
 import com.flowtap.app.util.AppLabels
 import com.flowtap.app.util.TimeUtil
 import kotlinx.coroutines.delay
@@ -117,6 +121,19 @@ fun HomeScreen(
     LaunchedEffect(nfcTick) { container.statsRepository.refreshTime() }
     val nfcOff = remember(nfcTick) {
         Permissions.hasNfcHardware(context) && !Permissions.isNfcEnabled(context)
+    }
+    // Warm-paper readiness: permission granted is not proof of enforcement.
+    val blockingMethod by container.settingsDataStore.blockingMethod.collectAsStateWithLifecycle(initialValue = BlockingMethod.FULL_POWER)
+    val readiness = remember(nfcTick, blockingMethod, active) {
+        BlockingReadiness(
+            method = blockingMethod,
+            accessibilityEnabled = Permissions.isAccessibilityEnabled(context),
+            accessibilityServiceConnected = com.flowtap.app.blocking.FocusAccessibilityService.isConnected,
+            usageAccessGranted = Permissions.isUsageAccessGranted(context),
+            overlayGranted = Permissions.canDrawOverlays(context),
+            sessionActive = active != null,
+            selectedAppCount = (selectedMode ?: modes.firstOrNull())?.let { if (it.allowlistOnly) it.allowedApps.size else it.blockedApps.size } ?: 0,
+        )
     }
 
     fun onToggleDnd() {
@@ -165,9 +182,9 @@ fun HomeScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(palette.card, MaterialTheme.shapes.medium)
-                    .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
-                    .clip(MaterialTheme.shapes.medium)
+                    .background(palette.card, PaperCardShape)
+                    .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
+                    .clip(PaperCardShape)
                     .clickable { Permissions.enableNfc(context) }
                     .padding(horizontal = Spacing.cardPadding, vertical = Spacing.md),
                 verticalAlignment = Alignment.CenterVertically,
@@ -216,6 +233,9 @@ fun HomeScreen(
                 defaultMode = selectedMode ?: modes.firstOrNull(),
                 softStartMode = softStartMode,
                 modesEmpty = modes.isEmpty(),
+                readinessStatus = readiness.statusLabel(),
+                readinessReady = readiness.isReady,
+                readinessMissing = readiness.missingRequirement(),
                 onStart = { vm.startFocusDefault() },
                 onToggleDnd = ::onToggleDnd,
                 onSelectSound = ::onSelectSound,
@@ -242,6 +262,9 @@ private fun IdleView(
     defaultMode: FocusMode?,
     softStartMode: FocusMode?,
     modesEmpty: Boolean,
+    readinessStatus: String,
+    readinessReady: Boolean,
+    readinessMissing: String?,
     onStart: () -> Unit,
     onToggleDnd: () -> Unit,
     onSelectSound: (com.flowtap.app.data.model.NotificationMode) -> Unit,
@@ -264,8 +287,8 @@ private fun IdleView(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(Dimens.primaryButtonHeight),
-            shape = MaterialTheme.shapes.medium,
-            colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
+            shape = PrimaryButtonShape,
+            colors = ButtonDefaults.buttonColors(containerColor = palette.accent, contentColor = palette.onAccent),
         ) {
             Icon(Icons.Outlined.Nfc, contentDescription = null)
             Spacer(Modifier.size(Spacing.sm))
@@ -385,8 +408,8 @@ private fun IdleView(
         modifier = Modifier
             .fillMaxWidth()
             .height(Dimens.primaryButtonHeight),
-        shape = MaterialTheme.shapes.medium,
-        colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
+        shape = PrimaryButtonShape,
+        colors = ButtonDefaults.buttonColors(containerColor = palette.accent, contentColor = palette.onAccent),
     ) {
         Icon(Icons.Outlined.Nfc, contentDescription = null)
         Spacer(Modifier.size(Spacing.sm))
@@ -402,6 +425,14 @@ private fun IdleView(
             textAlign = TextAlign.Center,
         )
     }
+    Spacer(Modifier.height(Spacing.sm))
+    Text(
+        text = if (readinessReady) readinessStatus else listOfNotNull(readinessStatus, readinessMissing).joinToString(" · "),
+        style = MaterialTheme.typography.labelLarge,
+        color = if (readinessReady) palette.accentText else palette.textTertiary,
+        modifier = Modifier.fillMaxWidth(),
+        textAlign = TextAlign.Center,
+    )
 
     Spacer(Modifier.height(Spacing.lg))
 
@@ -700,8 +731,8 @@ private fun ActiveSessionView(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(Dimens.primaryButtonHeight),
-            shape = MaterialTheme.shapes.medium,
-            colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
+            shape = PrimaryButtonShape,
+            colors = ButtonDefaults.buttonColors(containerColor = palette.accent, contentColor = palette.onAccent),
         ) {
             Text(
                 stringResource(R.string.common_end_session),
@@ -794,9 +825,9 @@ private fun ModeSelectorRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
-            .clip(MaterialTheme.shapes.medium)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
+            .clip(PaperCardShape)
             .clickable(enabled = modes.size > 1) { expanded = true }
             .padding(horizontal = Spacing.cardPadding, vertical = Spacing.md),
     ) {
@@ -866,9 +897,9 @@ private fun SessionRow(session: SessionRecord, modeNames: Map<Long, String>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
-            .clip(MaterialTheme.shapes.medium)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
+            .clip(PaperCardShape)
             .padding(horizontal = Spacing.cardPadding, vertical = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -8,7 +8,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 
 /**
- * Shared design tokens: spacing, motion durations, easing, and the timer text style.
+ * Shared design tokens: warm-paper spacing, control sizes, motion, timer style.
+ * Mockup rules: 20dp side gutters, 48dp minimum targets, 54-56dp primary
+ * buttons, 76dp+ setting rows, 600dp max centered content width.
  */
 object Spacing {
     val xxs = 2.dp
@@ -18,9 +20,8 @@ object Spacing {
     val lg = 16.dp
     val xl = 24.dp
     val xxl = 32.dp
-    val screenPadding = 16.dp
+    val screenPadding = 20.dp
     val cardGap = 12.dp
-    // Production polish tokens — use everywhere, no hardcoded dp.
     val screenTop = 16.dp
     val sectionGap = 20.dp
     val headerGap = 8.dp
@@ -33,6 +34,9 @@ object Spacing {
 object Dimens {
     val dialogMaxHeight = 280.dp
     val primaryButtonHeight = 56.dp
+    val primaryButtonShape = 17.dp
+    val controlMinHeight = 48.dp
+    val settingRowMinHeight = 76.dp
     val presetMinHeight = 48.dp
     val cardBorderWidth = 1.dp
     /** Unified hero ring: idle and active Home timers share one spec so sizes can't drift. */
@@ -40,7 +44,6 @@ object Dimens {
     val heroRingCompact = 180.dp
     val heroRingHistory = 170.dp
     val heroRingStroke = 12.dp
-    // Kept for binary-compat during migration; use heroRing instead.
     val heroRingIdle = heroRing
     val heroRingActive = heroRing
 }

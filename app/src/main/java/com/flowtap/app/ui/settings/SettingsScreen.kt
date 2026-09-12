@@ -64,6 +64,8 @@ import com.flowtap.app.session.SessionManager
 import com.flowtap.app.ui.components.SectionHeader
 import com.flowtap.app.ui.onboarding.Permissions
 import com.flowtap.app.ui.theme.Dimens
+import com.flowtap.app.ui.theme.PaperCardShape
+import com.flowtap.app.ui.theme.PrimaryButtonShape
 import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Spacing
 import com.flowtap.app.ui.util.rememberAdaptiveSidePadding
@@ -147,8 +149,8 @@ fun SettingsScreen(container: AppContainer) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(palette.card, MaterialTheme.shapes.medium)
-                        .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
+                        .background(palette.card, PaperCardShape)
+                        .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
                         .padding(Spacing.cardPadding),
                     verticalArrangement = Arrangement.spacedBy(Spacing.xs),
                 ) {
@@ -474,8 +476,8 @@ private fun ThemeCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
             .padding(Spacing.cardPadding),
     ) {
         Text(
@@ -498,7 +500,7 @@ private fun ThemeCard(
                         .weight(1f)
                         .heightIn(min = Dimens.presetMinHeight)
                         .background(
-                            if (selected) palette.accent else palette.ringTrack,
+                            if (selected) palette.selectedSurface else palette.card,
                             MaterialTheme.shapes.small,
                         )
                         .border(
@@ -515,7 +517,7 @@ private fun ThemeCard(
                     Icon(
                         icon,
                         contentDescription = null,
-                        tint = if (selected) MaterialTheme.colorScheme.onPrimary else palette.textSecondary,
+                        tint = if (selected) palette.textPrimary else palette.textSecondary,
                         modifier = Modifier.size(16.dp),
                     )
                     Spacer(Modifier.size(Spacing.xs))
@@ -523,7 +525,7 @@ private fun ThemeCard(
                         text = label,
                         style = MaterialTheme.typography.labelLarge,
                         textAlign = TextAlign.Center,
-                        color = if (selected) MaterialTheme.colorScheme.onPrimary else palette.textSecondary,
+                        color = if (selected) palette.textPrimary else palette.textSecondary,
                     )
                 }
             }
@@ -541,8 +543,8 @@ private fun BlockingMethodCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
             .padding(Spacing.cardPadding),
         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
@@ -576,7 +578,7 @@ private fun BlockingMethodRow(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                if (selected) palette.accent else palette.ringTrack,
+                if (selected) palette.selectedSurface else palette.card,
                 MaterialTheme.shapes.small,
             )
             .border(
@@ -593,13 +595,12 @@ private fun BlockingMethodRow(
             Text(
                 title,
                 style = MaterialTheme.typography.titleSmall,
-                color = if (selected) MaterialTheme.colorScheme.onPrimary else palette.textPrimary,
+                color = palette.textPrimary,
             )
             Text(
                 subtitle,
                 style = MaterialTheme.typography.labelMedium,
-                color = if (selected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
-                else palette.textSecondary,
+                color = palette.textSecondary,
             )
         }
     }
@@ -617,8 +618,8 @@ private fun SetupStatusCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
             .padding(Spacing.cardPadding),
         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
@@ -646,7 +647,7 @@ private fun SetupStatusCard(
             Spacer(Modifier.height(Spacing.xs))
             androidx.compose.material3.Button(
                 onClick = onFix,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.controlMinHeight),
             ) {
                 Text(stringResource(R.string.settings_setup_fix))
             }
@@ -660,8 +661,8 @@ private fun PaymentNudgeCard(enabled: Boolean, onSwitch: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
             .padding(Spacing.cardPadding)
             .alpha(if (enabled) 1f else 0.6f),
         verticalArrangement = Arrangement.spacedBy(Spacing.xs),
@@ -680,7 +681,7 @@ private fun PaymentNudgeCard(enabled: Boolean, onSwitch: () -> Unit) {
         androidx.compose.material3.Button(
             onClick = onSwitch,
             enabled = enabled,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = Dimens.controlMinHeight),
         ) {
             Text(stringResource(R.string.settings_payment_action))
         }
@@ -706,9 +707,10 @@ private fun SettingRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
-            .clip(MaterialTheme.shapes.medium)
+            .heightIn(min = Dimens.settingRowMinHeight)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
+            .clip(PaperCardShape)
             .clickable(enabled = enabled, onClick = onClick)
             .alpha(if (enabled) 1f else 0.6f)
             .padding(Spacing.cardPadding),
@@ -749,9 +751,10 @@ private fun SwitchRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
-            .clip(MaterialTheme.shapes.medium)
+            .heightIn(min = Dimens.settingRowMinHeight)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
+            .clip(PaperCardShape)
             .toggleable(
                 value = checked,
                 enabled = enabled,
@@ -773,7 +776,7 @@ private fun SwitchRow(
             enabled = enabled,
             onCheckedChange = null,
             colors = androidx.compose.material3.SwitchDefaults.colors(
-                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                checkedThumbColor = palette.onAccent,
                 checkedTrackColor = palette.accent,
                 checkedBorderColor = palette.accent,
                 uncheckedThumbColor = palette.textSecondary,

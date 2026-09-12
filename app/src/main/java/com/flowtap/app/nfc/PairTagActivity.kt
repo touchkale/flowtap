@@ -78,6 +78,8 @@ import com.flowtap.app.R
 import com.flowtap.app.data.model.FocusMode
 import com.flowtap.app.data.model.FocusTag
 import com.flowtap.app.ui.theme.Dimens
+import com.flowtap.app.ui.theme.PaperCardShape
+import com.flowtap.app.ui.theme.PrimaryButtonShape
 import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Motion
 import com.flowtap.app.ui.theme.FlowtapTheme
@@ -380,7 +382,7 @@ private fun PairTagScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(Dimens.primaryButtonHeight),
-                                shape = MaterialTheme.shapes.medium,
+                                shape = PrimaryButtonShape,
                             ) {
                                 Text(
                                     stringResource(R.string.nfc_create_continue),
@@ -417,9 +419,9 @@ private fun ModeRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
-            .clip(MaterialTheme.shapes.medium)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
+            .clip(PaperCardShape)
             .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
             .padding(horizontal = Spacing.lg, vertical = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
@@ -529,7 +531,7 @@ private fun ScanningBody(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(Dimens.primaryButtonHeight),
-                shape = MaterialTheme.shapes.medium,
+                shape = PrimaryButtonShape,
             ) {
                 Text(
                     stringResource(R.string.nfc_turn_on),

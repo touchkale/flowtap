@@ -94,7 +94,7 @@ class FocusAccessibilityService : AccessibilityService() {
         Haptics.tick(this)
 
         // Primary: accessibility overlay window. Fallback: overlay activity.
-        if (overlay?.show(snap) != true) {
+        if (overlay?.show(snap, pkg) != true) {
             runCatching {
                 val intent = Intent(this, BlockOverlayActivity::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)

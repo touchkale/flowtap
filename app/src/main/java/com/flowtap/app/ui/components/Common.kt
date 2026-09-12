@@ -69,6 +69,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.flowtap.app.R
 import com.flowtap.app.ui.theme.Dimens
+import com.flowtap.app.ui.theme.PaperCardShape
+import com.flowtap.app.ui.theme.PrimaryButtonShape
 import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Motion
 import com.flowtap.app.ui.theme.Spacing
@@ -87,9 +89,9 @@ fun FocusCard(
     val palette = LocalFocusPalette.current
     Box(
         modifier = modifier
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
-            .clip(MaterialTheme.shapes.medium),
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
+            .clip(PaperCardShape),
         contentAlignment = Alignment.Center,
         content = content,
     )
@@ -176,12 +178,13 @@ fun StatusChip(
     icon: ImageVector? = null,
     modifier: Modifier = Modifier,
     compact: Boolean = false,
+    selected: Boolean = false,
 ) {
     val palette = LocalFocusPalette.current
     Row(
         modifier = modifier
-            .background(palette.card, CircleShape)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, CircleShape)
+            .background(if (selected) palette.selectedSurface else palette.card, CircleShape)
+            .border(Dimens.cardBorderWidth, if (selected) palette.accent else palette.cardBorder, CircleShape)
             .clip(CircleShape)
             .semantics(mergeDescendants = true) { contentDescription = text }
             .padding(
@@ -203,7 +206,7 @@ fun StatusChip(
             text,
             style = if (compact) MaterialTheme.typography.labelMedium
             else MaterialTheme.typography.labelLarge,
-            color = palette.textSecondary,
+            color = if (selected) palette.textPrimary else palette.textSecondary,
         )
     }
 }
@@ -345,9 +348,9 @@ fun HoldToEndButton(
         modifier = modifier
             .fillMaxWidth()
             .height(Dimens.primaryButtonHeight)
-            .background(palette.ringTrack, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
-            .clip(MaterialTheme.shapes.medium)
+            .background(palette.selectedSurface, PrimaryButtonShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PrimaryButtonShape)
+            .clip(PrimaryButtonShape)
             .pointerInput(Unit) {
                 awaitEachGesture {
                     awaitFirstDown()
@@ -470,7 +473,8 @@ fun RecommendedBlockCard(
             Spacer(Modifier.size(Spacing.sm))
             Button(
                 onClick = onBlockAll,
-                colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
+                shape = PrimaryButtonShape,
+                colors = ButtonDefaults.buttonColors(containerColor = palette.accent, contentColor = palette.onAccent),
             ) {
                 Text(
                     stringResource(R.string.rec_block_all_x, unselectedCount),

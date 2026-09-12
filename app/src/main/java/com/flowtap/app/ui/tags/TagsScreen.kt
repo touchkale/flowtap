@@ -61,6 +61,8 @@ import com.flowtap.app.nfc.PairTagActivity
 import com.flowtap.app.ui.components.EmptyState
 import com.flowtap.app.ui.components.SectionHeader
 import com.flowtap.app.ui.theme.Dimens
+import com.flowtap.app.ui.theme.PaperCardShape
+import com.flowtap.app.ui.theme.PrimaryButtonShape
 import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Spacing
 import com.flowtap.app.ui.util.rememberAdaptiveSidePadding
@@ -109,8 +111,8 @@ fun TagsScreen(container: AppContainer) {
                     onClick = {
                         context.startActivity(Intent(context, PairTagActivity::class.java))
                     },
-                    shape = MaterialTheme.shapes.medium,
-                    colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
+                    shape = PrimaryButtonShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = palette.accent, contentColor = palette.onAccent),
                     modifier = Modifier.height(Dimens.presetMinHeight),
                 ) {
                     Icon(Icons.Outlined.Add, contentDescription = null)
@@ -137,8 +139,8 @@ fun TagsScreen(container: AppContainer) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(Dimens.primaryButtonHeight),
-                    shape = MaterialTheme.shapes.medium,
-                    colors = ButtonDefaults.buttonColors(containerColor = palette.accent),
+                    shape = PrimaryButtonShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = palette.accent, contentColor = palette.onAccent),
                 ) {
                     Text(
                         stringResource(R.string.tags_pair_first),
@@ -274,9 +276,9 @@ private fun TagCard(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(palette.card, MaterialTheme.shapes.medium)
-            .border(Dimens.cardBorderWidth, palette.cardBorder, MaterialTheme.shapes.medium)
-            .clip(MaterialTheme.shapes.medium)
+            .background(palette.card, PaperCardShape)
+            .border(Dimens.cardBorderWidth, palette.cardBorder, PaperCardShape)
+            .clip(PaperCardShape)
             .clickable(onClick = onClick, role = Role.Button)
             .padding(horizontal = Spacing.cardPadding, vertical = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
