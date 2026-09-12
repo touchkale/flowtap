@@ -58,14 +58,12 @@ import androidx.compose.ui.unit.dp
 import com.flowtap.app.R
 import com.flowtap.app.data.model.FocusMode
 import com.flowtap.app.ui.components.AppIcon
-import com.flowtap.app.ui.components.RecommendedBlockCard
 import com.flowtap.app.ui.components.StatusChip
 import com.flowtap.app.ui.theme.Dimens
 import com.flowtap.app.ui.theme.PaperCardShape
 import com.flowtap.app.ui.theme.PrimaryButtonShape
 import com.flowtap.app.ui.theme.LocalFocusPalette
 import com.flowtap.app.ui.theme.Spacing
-import com.flowtap.app.util.RecommendedApps
 
 data class InstalledApp(val pkg: String, val label: String)
 
@@ -271,47 +269,24 @@ fun rememberModeEditorState(mode: FocusMode): ModeEditorState =
 
 /**
  * The full mode-settings form (no scrolling of its own — the host screen
- * scrolls). App pickers keep bounded lazy lists via [appListMaxHeight] /
- * [launchListMaxHeight] so hundreds of apps stay smooth.
+ * scrolls). The blocked/allowed app directory lives in a separate screen;
+ * this form only shows its compact selection summary. The launch-app chooser
+ * remains bounded here because it is an optional advanced single choice.
  */
 @Composable
 fun ModeEditorForm(
     state: ModeEditorState,
     modifier: Modifier = Modifier,
-    appListMaxHeight: Dp = 220.dp,
     launchListMaxHeight: Dp = 180.dp,
+    onOpenAppPicker: () -> Unit,
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    var appSearch by remember { mutableStateOf("") }
     var launchSearch by remember { mutableStateOf("") }
     var apps by remember { mutableStateOf<List<InstalledApp>>(emptyList()) }
-    var appsError by remember { mutableStateOf(false) }
 
     // M3: shared catalog, off-main, deduplicated by package.
     LaunchedEffect(Unit) {
-        apps = runCatching { AppCatalog.load(context) }.getOrElse {
-            appsError = true
-            emptyList()
-        }
-    }
-
-    val sortedApps = remember(apps, appSearch) {
-        val q = appSearch.trim().lowercase()
-        apps.sortedBy { it.label.lowercase() }
-            .filter { q.isEmpty() || it.label.lowercase().contains(q) || it.pkg.lowercase().contains(q) }
-    }
-    // Installed social/distracting apps first while browsing a blocklist.
-    val recommended = remember(apps) {
-        val byPkg = apps.associateBy { it.pkg }
-        RecommendedApps.installed(apps.map { it.pkg }.toSet()).mapNotNull { byPkg[it] }
-    }
-    val showRecommended = !state.allowlistOnly && appSearch.isBlank() && recommended.isNotEmpty()
-    val unselectedRecommended = recommended.filter { it.pkg !in state.blocked }
-    val displayApps = if (showRecommended) {
-        val recPkgs = recommended.map { it.pkg }.toSet()
-        recommended + sortedApps.filter { it.pkg !in recPkgs }
-    } else {
-        sortedApps
+        apps = runCatching { AppCatalog.load(context) }.getOrDefault(emptyList())
     }
     val sortedLaunchApps = remember(apps, launchSearch) {
         val q = launchSearch.trim().lowercase()
@@ -371,52 +346,60 @@ fun ModeEditorForm(
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Spacer(Modifier.height(Spacing.xs))
-                OutlinedTextField(
-                    value = appSearch,
-                    onValueChange = { appSearch = it },
-                    label = { Text(stringResource(R.string.modes_app_search)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(Spacing.xs))
-                if (showRecommended && unselectedRecommended.isNotEmpty()) {
-                    RecommendedBlockCard(
-                        unselectedCount = unselectedRecommended.size,
-                        onBlockAll = {
-                            state.blocked = state.blocked + recommended.map { it.pkg }.toSet()
-                        },
+                val selectedCount = if (state.allowlistOnly) state.allowed.size else state.blocked.size
+                val selectedPackages = if (state.allowlistOnly) state.allowed else state.blocked
+                val selectedNames = apps
+                    .filter { it.pkg in selectedPackages }
+                    .sortedBy { it.label.lowercase() }
+                    .map { it.label }
+                val selectionSummary = when {
+                    selectedCount == 0 -> stringResource(R.string.modes_no_apps_selected)
+                    selectedNames.isEmpty() -> pluralStringResource(
+                        R.plurals.plural_apps_selected,
+                        selectedCount,
+                        selectedCount,
                     )
-                    Spacer(Modifier.height(Spacing.xs))
+                    selectedNames.size <= 3 && selectedNames.size == selectedCount ->
+                        selectedNames.joinToString(", ")
+                    else -> stringResource(
+                        R.string.modes_apps_summary_more,
+                        selectedNames.take(3).joinToString(", "),
+                        (selectedCount - selectedNames.take(3).size).coerceAtLeast(0),
+                    )
                 }
-                LazyColumn(modifier = Modifier.heightIn(max = appListMaxHeight)) {
-                    items(displayApps, key = { it.pkg }) { app ->
-                        val checked = if (state.allowlistOnly) app.pkg in state.allowed else app.pkg in state.blocked
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = Dimens.presetMinHeight)
-                                .clip(MaterialTheme.shapes.small)
-                                .toggleable(
-                                    value = checked,
-                                    onValueChange = {
-                                        if (state.allowlistOnly) {
-                                            state.allowed = if (checked) state.allowed - app.pkg else state.allowed + app.pkg
-                                        } else {
-                                            state.blocked = if (checked) state.blocked - app.pkg else state.blocked + app.pkg
-                                        }
-                                    },
-                                    role = Role.Checkbox,
-                                )
-                                .padding(horizontal = Spacing.sm, vertical = Spacing.xs),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(checked = checked, onCheckedChange = null)
-                            Spacer(Modifier.size(Spacing.sm))
-                            AppIcon(pkg = app.pkg, label = app.label, size = 32.dp, corner = 9.dp)
-                            Spacer(Modifier.size(Spacing.sm))
-                            Text(app.label, style = MaterialTheme.typography.bodyMedium)
-                        }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = Dimens.settingRowMinHeight)
+                        .background(LocalFocusPalette.current.card, PaperCardShape)
+                        .border(Dimens.cardBorderWidth, LocalFocusPalette.current.cardBorder, PaperCardShape)
+                        .clip(PaperCardShape)
+                        .clickable(onClick = onOpenAppPicker, role = Role.Button)
+                        .padding(Spacing.cardPadding),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        Icons.Outlined.Block,
+                        contentDescription = null,
+                        tint = LocalFocusPalette.current.accentText,
+                    )
+                    Spacer(Modifier.size(Spacing.md))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.modes_selected_apps),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(
+                            selectionSummary,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
+                    Text(
+                        stringResource(R.string.modes_choose_apps),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = LocalFocusPalette.current.accentText,
+                    )
                 }
 
                 Spacer(Modifier.height(Spacing.md))

@@ -15,7 +15,7 @@ Open **[the preview gallery](index.html)** to review all nine workflows and swit
 | [09-theming.svg](09-theming.svg) | Matching light and dark layouts |
 | [10-responsive-check.svg](10-responsive-check.svg) | Three sizes side by side |
 
-These are **editable vector proposals**, with sample data. The Android application has not been modified. The original screenshot-based SVGs are preserved in [reference/](reference/); their original captures remain in `raw/`.
+These are **editable vector references**, with sample data. The Android application implements their warm-paper system, responsive phone rules, and interaction states; the SVGs remain the visual review source. The original screenshot-based SVGs are preserved in [reference/](reference/); their original captures remain in `raw/`.
 
 - `screens/`: individual SVGs in three phone sizes, plus complete scrolling editor and Settings sheets.
 - [DESIGN.md](DESIGN.md): geometry, colors, responsive layout rules and interaction specifications.

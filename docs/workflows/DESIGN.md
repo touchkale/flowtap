@@ -1,10 +1,10 @@
 # FlowTap — vector UI proposal
 
-This redesign is an editable SVG design study, not a change to the Android application. All session values, installed apps, tag names and permission states are illustrative. Original screenshot boards are preserved in `reference/`; raw captures remain in `raw/`.
+This redesign is the editable vector reference for the Android application. All session values, installed apps, tag names and permission states shown in the SVGs are illustrative. Original screenshot boards are preserved in `reference/`; raw captures remain in `raw/`.
 
 ## Direction
 
-Warm paper, forest green and soft outlined cards. Large numerals emphasize focus time; secondary information uses a quieter hierarchy. One primary action sits within thumb reach. The existing five destinations remain Home, History, Tags, Modes and Settings. This is a proposed palette change from the app's current amber/navy system, scoped to these mockups.
+Warm paper, forest green and soft outlined cards. Large numerals emphasize focus time; secondary information uses a quieter hierarchy. One primary action sits within thumb reach. The five destinations remain Home, History, Tags, Modes and Settings. The Android UI uses this palette and geometry in light and dark appearance modes.
 
 Every visible shape, icon and text label is vector geometry or editable text. No embedded screenshots, remote fonts or external SVG assets are needed. Arial with Helvetica/sans-serif fallback keeps previews portable; an Android implementation should use its platform typography and remeasure text.
 

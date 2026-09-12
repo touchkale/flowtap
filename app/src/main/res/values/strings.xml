@@ -158,6 +158,26 @@
     <string name="modes_notif_dnd_sub">Do Not Disturb on, restored after</string>
     <string name="modes_blocklist_sub">Only selected apps are blocked</string>
     <string name="modes_allowlist_sub">Everything except selected apps is blocked</string>
+    <string name="modes_selected_apps">Selected apps</string>
+    <string name="modes_no_apps_selected">No apps selected</string>
+    <string name="modes_apps_summary_more">%1$s +%2$d more</string>
+    <string name="modes_choose_apps">Choose apps</string>
+    <string name="modes_choose_apps_title">Choose apps</string>
+    <string name="modes_picker_block_sub">Choose the apps FlowTap should pause during this mode.</string>
+    <string name="modes_picker_allow_sub">Choose the only apps that should remain available during this mode.</string>
+    <string name="modes_filter_all">All apps</string>
+    <string name="modes_filter_selected_x">Selected (%1$d)</string>
+    <string name="modes_apps_loading">Loading installed apps…</string>
+    <string name="modes_apps_error">Couldn’t load apps</string>
+    <string name="modes_apps_error_sub">Try again to refresh the installed app list.</string>
+    <string name="modes_apps_empty">No launchable apps found</string>
+    <string name="modes_app_unavailable">Unavailable on this device · tap to remove</string>
+    <string name="modes_app_selected">Selected</string>
+    <string name="modes_app_available">Available during focus</string>
+    <plurals name="plural_done_apps">
+        <item quantity="one">Done · %d app</item>
+        <item quantity="other">Done · %d apps</item>
+    </plurals>
 
     <!-- History -->
     <string name="history_title">History</string>
@@ -176,6 +196,7 @@
     <string name="history_delete_title">Delete this session?</string>
     <string name="history_delete_sub">Totals and charts update immediately. This can\'t be undone.</string>
     <string name="history_empty_subtitle">Complete your first focus session to see it here.</string>
+    <string name="history_open_home">Start from Home</string>
     <string name="history_started">Started</string>
     <string name="history_ended">Ended</string>
     <string name="history_duration">Duration</string>

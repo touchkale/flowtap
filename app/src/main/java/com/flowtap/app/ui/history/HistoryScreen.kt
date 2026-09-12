@@ -67,7 +67,10 @@ import com.flowtap.app.ui.util.rememberAdaptiveSidePadding
 import com.flowtap.app.util.TimeUtil
 
 @Composable
-fun HistoryScreen(container: AppContainer) {
+fun HistoryScreen(
+    container: AppContainer,
+    onOpenHome: () -> Unit,
+) {
     val vm: HistoryViewModel = viewModel(factory = HistoryViewModel.factory(container))
     val palette = LocalFocusPalette.current
 
@@ -123,14 +126,14 @@ fun HistoryScreen(container: AppContainer) {
                 Spacer(Modifier.height(Spacing.sectionGap))
             }
 
-            item {
+            if (sessions.isNotEmpty()) item {
                 ModeWeekCard(modes = modes, modeWeeks = modeWeeks)
                 Spacer(Modifier.height(Spacing.cardGap))
                 StatTrio(streak = streak, longest = longest, average = average)
                 Spacer(Modifier.height(Spacing.sectionGap))
             }
 
-            item {
+            if (sessions.isNotEmpty()) item {
                 if (week.days.isNotEmpty()) {
                     SectionHeader(title = stringResource(R.string.history_this_week))
                     Spacer(Modifier.height(Spacing.headerGap))
@@ -181,7 +184,7 @@ fun HistoryScreen(container: AppContainer) {
                 Spacer(Modifier.height(Spacing.sectionGap))
             }
 
-            item {
+            if (sessions.isNotEmpty()) item {
                 SectionHeader(title = stringResource(R.string.history_all))
                 Spacer(Modifier.height(Spacing.headerGap))
             }
@@ -192,6 +195,8 @@ fun HistoryScreen(container: AppContainer) {
                     EmptyState(
                         title = stringResource(R.string.history_empty_title),
                         subtitle = stringResource(R.string.history_empty_subtitle),
+                        action = stringResource(R.string.history_open_home),
+                        onAction = onOpenHome,
                     )
                 }
             } else {

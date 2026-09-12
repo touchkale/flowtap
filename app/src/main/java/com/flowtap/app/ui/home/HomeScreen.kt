@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,6 +46,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -158,12 +160,43 @@ fun HomeScreen(
     }
 
     val sidePadding = rememberAdaptiveSidePadding()
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = sidePadding),
-    ) {
+    Scaffold(
+        containerColor = palette.background,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        bottomBar = {
+            if (active == null && modes.isNotEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(palette.background)
+                        .padding(horizontal = sidePadding, vertical = Spacing.sm),
+                ) {
+                    Button(
+                        onClick = { vm.startFocusDefault() },
+                        enabled = softStartMode != null,
+                        modifier = Modifier.fillMaxWidth().height(Dimens.primaryButtonHeight),
+                        shape = PrimaryButtonShape,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = palette.accent,
+                            contentColor = palette.onAccent,
+                        ),
+                    ) {
+                        Text(
+                            stringResource(R.string.home_start),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                    }
+                }
+            }
+        },
+    ) { contentPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(contentPadding)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = sidePadding),
+        ) {
         Spacer(Modifier.height(Spacing.screenTop))
         Text(
             stringResource(R.string.app_name),
@@ -236,7 +269,6 @@ fun HomeScreen(
                 readinessStatus = readiness.statusLabel(),
                 readinessReady = readiness.isReady,
                 readinessMissing = readiness.missingRequirement(),
-                onStart = { vm.startFocusDefault() },
                 onToggleDnd = ::onToggleDnd,
                 onSelectSound = ::onSelectSound,
                 onPairTag = {
@@ -246,6 +278,7 @@ fun HomeScreen(
             )
         }
         Spacer(Modifier.height(Spacing.listBottom))
+        }
     }
 }
 
@@ -265,7 +298,6 @@ private fun IdleView(
     readinessStatus: String,
     readinessReady: Boolean,
     readinessMissing: String?,
-    onStart: () -> Unit,
     onToggleDnd: () -> Unit,
     onSelectSound: (com.flowtap.app.data.model.NotificationMode) -> Unit,
     onPairTag: () -> Unit,
@@ -402,19 +434,6 @@ private fun IdleView(
 
     Spacer(Modifier.height(Spacing.lg))
 
-    Button(
-        onClick = onStart,
-        enabled = softStartMode != null,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(Dimens.primaryButtonHeight),
-        shape = PrimaryButtonShape,
-        colors = ButtonDefaults.buttonColors(containerColor = palette.accent, contentColor = palette.onAccent),
-    ) {
-        Icon(Icons.Outlined.Nfc, contentDescription = null)
-        Spacer(Modifier.size(Spacing.sm))
-        Text(stringResource(R.string.home_start), style = MaterialTheme.typography.titleMedium)
-    }
     if (softStartMode == null) {
         Spacer(Modifier.height(Spacing.sm))
         Text(

@@ -148,7 +148,20 @@ fun MainApp() {
                     onOpenHistory = { navController.navigate(Routes.HISTORY) },
                 )
             }
-            composable(Routes.HISTORY) { HistoryScreen(container) }
+            composable(Routes.HISTORY) {
+                HistoryScreen(
+                    container = container,
+                    onOpenHome = {
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                )
+            }
             composable(Routes.TAGS) { TagsScreen(container) }
             composable(Routes.MODES) {
                 ModesScreen(

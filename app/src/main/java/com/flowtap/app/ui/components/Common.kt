@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -492,6 +493,8 @@ fun EmptyState(
     subtitle: String? = null,
     modifier: Modifier = Modifier,
     pulsing: Boolean = false,
+    action: String? = null,
+    onAction: (() -> Unit)? = null,
 ) {
     val palette = LocalFocusPalette.current
     Column(
@@ -513,6 +516,14 @@ fun EmptyState(
         Text(title, style = MaterialTheme.typography.titleMedium, color = palette.textPrimary, textAlign = TextAlign.Center)
         if (subtitle != null) {
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = palette.textSecondary, textAlign = TextAlign.Center)
+        }
+        if (action != null && onAction != null) {
+            TextButton(
+                onClick = onAction,
+                modifier = Modifier.heightIn(min = Dimens.controlMinHeight),
+            ) {
+                Text(action, color = palette.accentText)
+            }
         }
     }
 }
