@@ -64,7 +64,7 @@ average window) plus legacy stats/time/notification/poller suites.
 ## Device acceptance
 
 - [ ] Emulator (older supported APIs): both engines ± access, rotation, reboot, revocation, midnight rollover, empty/populated
-- [ ] Physical the test device (Android 16/API 36, ~363dp, font 1.15): layout vs `docs/audit-2026-09-09/screenshots/`, light/dark/system, real NFC taps, real sound restore, incoming call + lock screen
+- [ ] Physical device (narrow ~363dp width, large font scale): layout vs `docs/audit-2026-09-09/screenshots/`, light/dark/system, real NFC taps, real sound restore, incoming call + lock screen
 - [ ] Record Android version, app version/sha, and config in QA notes; attach before/after Settings + Mode Edit shots
 
 ## Verified 2026-09-09 (isolated emulator, no phone changes)
